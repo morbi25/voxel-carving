@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <opencv2/opencv.hpp>
-#include "Eigen.h"
+#include "inc/Eigen.h"
 using namespace cv;
 
 int main(int argc, char **argv)
