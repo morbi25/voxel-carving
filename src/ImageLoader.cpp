@@ -25,8 +25,7 @@ void ImageLoader::readImages(std::vector<cv::Mat> &images, std::vector<Eigen::Ma
         // Read image
         auto image = cv::imread(filenames[i]);
 
-        // Optionall
-
+        // Use mask if specified
         if (mode == cv::GrabCutModes::GC_INIT_WITH_MASK)
         {
             mask = masks[i];
