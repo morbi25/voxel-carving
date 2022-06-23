@@ -18,7 +18,12 @@ set(CMAKE_CXX_STANDARD 14)
 add_definitions("-D_DISABLE_EXTENDED_ALIGNED_STORAGE")
 
 set(HEADER_FILES 
-    Eigen.h 
+    Eigen.h
+    VoxelGrid.h
+)
+
+set(SOURCE_FILES 
+    VoxelGrid.cpp
 )
 
 link_directories(${FreeImage_LIBRARY_DIR})
