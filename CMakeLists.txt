@@ -21,6 +21,10 @@ set(HEADER_FILES
     Eigen.h 
 )
 
+set(SOURCE_FILES
+calib_intrinsic.cpp
+)
+
 link_directories(${FreeImage_LIBRARY_DIR})
 add_executable(voxel_carving main.cpp ${HEADER_FILES} ${SOURCE_FILES})
 target_link_libraries(voxel_carving ${OpenCV_LIBS} Eigen3::Eigen)
