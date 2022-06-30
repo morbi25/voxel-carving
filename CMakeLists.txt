@@ -27,10 +27,7 @@ set(HEADER_FILES
 
 set(SOURCE_FILES 
     VoxelGrid.cpp
-)
-
-set(SOURCE_FILES
-calib_intrinsic.cpp
+    calib_intrinsic.cpp
 )
 
 link_directories(${FreeImage_LIBRARY_DIR})
