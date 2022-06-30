@@ -4,7 +4,6 @@
 class VoxelGrid
 {
 public:
-
 	VoxelGrid(int sizeX_, int sizeY_, int sizeZ_);
 	~VoxelGrid();
 
@@ -12,9 +11,10 @@ public:
 	void setElement(int x, int y, int z, uint8_t val);
 
 	void carveSingleImg(cv::Mat img);
-	
+	void render();
+
 	int sizeX, sizeY, sizeZ;
 
 private:
-	uint8_t*** grid;
+	uint8_t ***grid;
 };
