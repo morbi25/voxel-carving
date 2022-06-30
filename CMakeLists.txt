@@ -20,7 +20,15 @@ set(CMAKE_CXX_STANDARD 14)
 
 add_definitions("-D_DISABLE_EXTENDED_ALIGNED_STORAGE")
 
-# Normal target
+set(HEADER_FILES 
+    Eigen.h
+    VoxelGrid.h
+)
+
+set(SOURCE_FILES 
+    VoxelGrid.cpp
+)
+
 link_directories(${FreeImage_LIBRARY_DIR})
 add_executable(voxel_carving main.cpp)
 target_link_libraries(voxel_carving ${OpenCV_LIBS} Eigen3::Eigen)
