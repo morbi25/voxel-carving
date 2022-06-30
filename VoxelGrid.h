@@ -11,6 +11,7 @@ public:
 	void setElement(int x, int y, int z, uint8_t val);
 
 	void carveSingleImg(cv::Mat img);
+	void toPLY();
 	void render();
 
 	int sizeX, sizeY, sizeZ;
