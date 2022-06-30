@@ -29,6 +29,10 @@ set(SOURCE_FILES
     VoxelGrid.cpp
 )
 
+set(SOURCE_FILES
+calib_intrinsic.cpp
+)
+
 link_directories(${FreeImage_LIBRARY_DIR})
 add_executable(voxel_carving main.cpp)
 target_link_libraries(voxel_carving ${OpenCV_LIBS} Eigen3::Eigen)

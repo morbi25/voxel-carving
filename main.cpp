@@ -3,12 +3,22 @@
 
 //#include "inc/Eigen.h"
 #include "Eigen.h"
+#include "calib_intrinsic.cpp"
 #include "VoxelGrid.h"
 
 using namespace cv;
 
 int main(int argc, char **argv)
 {
+    //do_calib("C:/Users/Alex/Documents/Alexander/Studium/Master_TUM/Studium/SS22/3D Scanning and Motion Capture/Exercises/voxel-carving/calib_conf.xml", 11);
+    cv::Mat cameraMatrix, distCoeffs, R, T;
+    do_calib(cameraMatrix, distCoeffs,R,T);
+
+    std::cout << "cameraMatrix : " << cameraMatrix << std::endl;
+    std::cout << "distCoeffs : " << distCoeffs << std::endl;
+    std::cout << "Rotation vector : " << R << std::endl;
+    std::cout << "Translation vector : " << T << std::endl;
+
     // // Testing Eigen
     // Eigen::Vector3f v(1, 2, 3);
     // // Print the vector
