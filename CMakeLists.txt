@@ -25,14 +25,14 @@ link_directories(${FreeImage_LIBRARY_DIR})
 add_executable(voxel_carving main.cpp)
 target_link_libraries(voxel_carving ${OpenCV_LIBS} Eigen3::Eigen)
 target_include_directories(voxel_carving PUBLIC ${EIGEN3_INCLUDE_DIR})
-target_sources(voxel_carving PRIVATE src/ImageLoader.cpp)
+target_sources(voxel_carving PRIVATE src/ImagePreprocessor.cpp)
 
 # Unit Tests
-add_executable(test_voxel_carving test/Test_ImageLoader.cpp)
+add_executable(test_voxel_carving test/Test_ImagePreprocessor.cpp)
 target_link_libraries(test_voxel_carving ${OpenCV_LIBS} Eigen3::Eigen gtest gtest_main)
 target_include_directories(voxel_carving PUBLIC ${EIGEN3_INCLUDE_DIR})
 add_test( test_voxel_carving test_voxel_carving )
-target_sources(test_voxel_carving PRIVATE src/ImageLoader.cpp)
+target_sources(test_voxel_carving PRIVATE src/ImagePreprocessor.cpp)
 
 # For mac os use additional compile flag
 if(MACOS)
