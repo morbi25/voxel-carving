@@ -109,13 +109,4 @@ if(WIN32)
     # Visual Studio properties
     set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT voxel_carving)
     set_property(TARGET voxel_carving PROPERTY VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/)
-
-    get_target_property(open3d_type Open3D::Open3D TYPE)
-    if(open3d_type STREQUAL "SHARED_LIBRARY")
-        message(STATUS "Copying Open3D.dll to ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>")
-        add_custom_command(TARGET Draw POST_BUILD
-                           COMMAND ${CMAKE_COMMAND} -E copy
-                                   ${CMAKE_INSTALL_PREFIX}/bin/Open3D.dll
-                                   ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
-    endif()
 endif()
