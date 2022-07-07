@@ -1,4 +1,4 @@
-#include "VoxelGrid.h"
+#include "../inc/VoxelGrid.h"
 
 using namespace cv;
 
