@@ -1,6 +1,12 @@
-#include "../inc/VoxelGrid.h"
+#include "inc/VoxelGrid.h"
+#include "open3d/Open3D.h"
+#include "inc/Eigen.h"
+#include <fstream>
+#include <iostream>
 
 using namespace cv;
+using namespace open3d;
+using namespace std;
 
 VoxelGrid::VoxelGrid(int sizeX_, int sizeY_, int sizeZ_)
 {
@@ -61,77 +67,66 @@ void VoxelGrid::carveSingleImg(Mat img)
 	}
 }
 
+void VoxelGrid::toPLY()
+{
+	ofstream myfile;
+	myfile.open("voxel_grid.ply");
+	int count = 0;
+	for (int z = 0; z < sizeZ; ++z)
+	{
+		for (int x = 0; x < sizeX; ++x)
+		{
+			for (int y = 0; y < sizeY; ++y)
+			{
+				if (grid[z][x][y] == 1)
+					count++;
+			}
+		}
+	}
+
+	myfile << "ply" << endl;
+	myfile << "format ascii 1.0" << endl;
+	myfile << "comment Created by Open3D" << endl;
+	// myfile << "element origin 1" << endl;
+	// myfile << "property double x" << endl;
+	// myfile << "property double y" << endl;
+	// myfile << "property double z" << endl;
+	myfile << "element voxel_size 1" << endl;
+	myfile << "property double val" << endl;
+	myfile << "element vertex " << count << endl;
+	myfile << "property double x" << endl;
+	myfile << "property double y" << endl;
+	myfile << "property double z" << endl;
+	myfile << "property uchar red" << endl;
+	myfile << "property uchar green" << endl;
+	myfile << "property uchar blue" << endl;
+	myfile << "end_header" << endl;
+
+	// myfile << 0 << " " << 0 << " " << 0 << endl;
+	myfile << 0.5 << endl;
+
+	for (int z = 0; z < sizeZ; ++z)
+	{
+		for (int x = 0; x < sizeX; ++x)
+		{
+			for (int y = 0; y < sizeY; ++y)
+			{
+				if (grid[z][x][y] == 1)
+				{
+					myfile << x << " " << y << " " << z << " " << 0 << " " << 255 << " " << 0 << endl;
+				}
+			}
+		}
+	}
+
+	myfile.close();
+}
+
 void VoxelGrid::render()
 {
-	Mat zAxis(sizeX, sizeY, CV_8UC1);
-	Mat yAxis(sizeX, sizeZ, CV_8UC1);
-	Mat xAxis(sizeY, sizeZ, CV_8UC1);
-
-	for (int z = 0; z < sizeZ; ++z)
-	{
-		for (int x = 0; x < sizeX; ++x)
-		{
-			for (int y = 0; y < sizeY; ++y)
-			{
-				zAxis.at<uint8_t>(x, y) = 255;
-				yAxis.at<uint8_t>(x, z) = 255;
-				xAxis.at<uint8_t>(y, z) = 255;
-			}
-		}
-	}
-
-	for (int z = 0; z < sizeZ; ++z)
-	{
-		for (int x = 0; x < sizeX; ++x)
-		{
-			for (int y = 0; y < sizeY; ++y)
-			{
-				zAxis.at<uint8_t>(x, y) = (grid[z][x][y] == 1) ? 0 : 1 * zAxis.at<uint8_t>(x, y);
-				yAxis.at<uint8_t>(x, z) = (grid[z][x][y] == 1) ? 0 : 1 * yAxis.at<uint8_t>(x, z);
-				xAxis.at<uint8_t>(y, z) = (grid[z][x][y] == 1) ? 0 : 1 * xAxis.at<uint8_t>(y, z);
-			}
-		}
-	}
-
-	// Invert the pictures.
-
-	for (int x = 0; x < sizeX; ++x)
-	{
-		for (int y = 0; y < sizeY; ++y)
-		{
-			zAxis.at<uint8_t>(x, y) = (zAxis.at<uint8_t>(x, y) == 255) ? 0 : 255;
-		}
-	}
-
-	for (int x = 0; x < sizeX; ++x)
-	{
-		for (int z = 0; z < sizeZ; ++z)
-		{
-			yAxis.at<uint8_t>(x, z) = (yAxis.at<uint8_t>(x, z) == 255) ? 0 : 255;
-		}
-	}
-
-	for (int y = 0; y < sizeY; ++y)
-	{
-		for (int z = 0; z < sizeZ; ++z)
-		{
-			xAxis.at<uint8_t>(y, z) = (xAxis.at<uint8_t>(y, z) == 255) ? 0 : 255;
-		}
-	}
-
-	// Resize the pictures to the 50x to get sharper images.
-	int resize_factor = 50;
-	Mat zAxisResized(resize_factor * sizeX, resize_factor * sizeY, CV_8UC1);
-	Mat yAxisResized(resize_factor * sizeX, resize_factor * sizeZ, CV_8UC1);
-	Mat xAxisResized(resize_factor * sizeY, resize_factor * sizeZ, CV_8UC1);
-
-	resize(zAxis, zAxisResized, Size(resize_factor * sizeX, resize_factor * sizeY), 0, 0, INTER_AREA);
-	resize(yAxis, yAxisResized, Size(resize_factor * sizeX, resize_factor * sizeZ), 0, 0, INTER_AREA);
-	resize(xAxis, xAxisResized, Size(resize_factor * sizeY, resize_factor * sizeZ), 0, 0, INTER_AREA);
-
-	imshow("Z Axis", zAxisResized);
-	imshow("Y Axis", yAxisResized);
-	imshow("X Axis", xAxisResized);
-
-	waitKey(0);
+	VoxelGrid::toPLY();
+	// create new VoxelGrid object
+	auto vg = std::make_shared<geometry::VoxelGrid>();
+	io::ReadVoxelGrid("voxel_grid.ply", *vg);
+	open3d::visualization::DrawGeometries({vg});
 }
