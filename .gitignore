@@ -42,5 +42,8 @@ Build/
 # VSCode settings
 .vscode/
 
+# Resources
+resources/
+
 .DS_Store
 # End of https://www.toptal.com/developers/gitignore/api/c++
