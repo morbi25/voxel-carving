@@ -16,31 +16,22 @@ find_package( Eigen3 REQUIRED )
 include_directories( ${OpenCV_INCLUDE_DIRS} )
 
 # Set C++ flags
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 
 add_definitions("-D_DISABLE_EXTENDED_ALIGNED_STORAGE")
-
-set(HEADER_FILES 
-    Eigen.h
-    VoxelGrid.h
-)
-
-set(SOURCE_FILES 
-    VoxelGrid.cpp
-)
 
 link_directories(${FreeImage_LIBRARY_DIR})
 add_executable(voxel_carving main.cpp)
 target_link_libraries(voxel_carving ${OpenCV_LIBS} Eigen3::Eigen)
 target_include_directories(voxel_carving PUBLIC ${EIGEN3_INCLUDE_DIR})
-target_sources(voxel_carving PRIVATE src/ImagePreprocessor.cpp)
+target_sources(voxel_carving PRIVATE src/ImagePreprocessor.cpp src/PoseEstimator.cpp src/VoxelGrid.cpp)
 
 # Unit Tests
 add_executable(test_voxel_carving test/Test_ImagePreprocessor.cpp)
 target_link_libraries(test_voxel_carving ${OpenCV_LIBS} Eigen3::Eigen gtest gtest_main)
 target_include_directories(voxel_carving PUBLIC ${EIGEN3_INCLUDE_DIR})
 add_test( test_voxel_carving test_voxel_carving )
-target_sources(test_voxel_carving PRIVATE src/ImagePreprocessor.cpp)
+target_sources(test_voxel_carving PRIVATE src/ImagePreprocessor.cpp src/PoseEstimator.cpp src/VoxelGrid.cpp)
 
 # For mac os use additional compile flag
 if(MACOS)
