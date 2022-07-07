@@ -20,7 +20,7 @@ public:
 	void carve(std::vector<cv::Mat> images, std::vector<cv::Matx44d> poses, double imgScale, float voteTreshold = 1.0);
 	
 	int sizeX, sizeY, sizeZ;
-	float startX, startY, startZ, step;
+	double startX, startY, startZ, step;
 
 private:
 	uint8_t ***grid;

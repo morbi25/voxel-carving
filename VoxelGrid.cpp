@@ -93,6 +93,8 @@ void VoxelGrid::toPLY()
 		}
 	}
 
+	std::cout << "EXPORT STARTING, NUMBER OF VOXELS:" << count << endl;
+
 	myfile << "ply" << endl;
 	myfile << "format ascii 1.0" << endl;
 	myfile << "comment Created by Open3D" << endl;
@@ -116,6 +118,7 @@ void VoxelGrid::toPLY()
 
 	for (int z = 0; z < sizeZ; ++z)
 	{
+		std::cout << "Exporting Z:" << z << endl;
 		for (int x = 0; x < sizeX; ++x)
 		{
 			for (int y = 0; y < sizeY; ++y)
@@ -146,9 +149,9 @@ void VoxelGrid::render()
 Point3d VoxelGrid::voxelToWorld(int x, int y, int z)
 {
 	Point3d point;
-	point.x = startX + step * x;
-	point.y = startY + step * y;
-	point.z = startZ + step * z;
+	point.x = startX + double(step * x);
+	point.y = startY + double(step * y);
+	point.z = startZ + double(step * z);
 
 	return point;
 }
@@ -170,17 +173,24 @@ Point2i VoxelGrid::projectVoxel(int x, int y, int z, Matx44d pose, double imgSca
 
 	Matx33d intrinsicScaled = intrinsic * imgScale;
 
-	// General projection matrix from world to screen
+	// General projection matrix from world to camera to screen
 	Matx34d P = intrinsicScaled * (standardProjection * pose);
 
+	// 2D pixel point on screen
 	Point2i pointPixel;
-	Point3f voxelWorld = voxelToWorld(x, y, z);
-	
-	double zc = P(2, 0) * voxelWorld.x + P(2, 1) * voxelWorld.y + P(2, 2) * voxelWorld.z + P(2, 3);
-	//double zc = 1.0;
 
-	pointPixel.x = (P(0, 0) * voxelWorld.x + P(0, 1) * voxelWorld.y + P(0, 2) * voxelWorld.z + P(0, 3)) / zc;
-	pointPixel.y = (P(1, 0) * voxelWorld.x + P(1, 1) * voxelWorld.y + P(1, 2) * voxelWorld.z + P(1, 3)) / zc;
+	// 3D world coordinates of the voxel
+	Point3d voxelWorld = voxelToWorld(x, y, z);
+
+	// 4D world coordinates of the voxel (3D, 1)
+	Matx41d voxelWorld4d(voxelWorld.x, voxelWorld.y, voxelWorld.z, 1.0);
+
+	
+	Matx31d Pixel3d = P * voxelWorld4d;
+	
+	pointPixel.x = Pixel3d(0, 0) / Pixel3d(2, 0);
+	pointPixel.y = Pixel3d(1, 0) / Pixel3d(2, 0);
+	
 
 	return pointPixel;
 }
@@ -191,6 +201,7 @@ void VoxelGrid::carve(std::vector<Mat> images, std::vector<Matx44d> poses, doubl
 	// Looping over voxels
 	for (int x = 0; x < sizeX; ++x)
 	{
+		std::cout << "Carving X:" << x << std::endl;
 		for (int y = 0; y < sizeY; ++y)
 		{
 			for (int z = 0; z < sizeZ; ++z)
@@ -222,6 +233,7 @@ void VoxelGrid::carve(std::vector<Mat> images, std::vector<Matx44d> poses, doubl
 				if (vote >= voteTreshold * numImages)
 				{
 					setElement(x, y, z, 0);
+					//std::cout << "carved at:"<<  x << ", " << y << ", " << z << endl;
 				}
 			}
 		}
