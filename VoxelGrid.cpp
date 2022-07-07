@@ -220,10 +220,10 @@ void VoxelGrid::carve(std::vector<Mat> images, std::vector<Matx44d> poses, doubl
 					// Project voxel onto image
 					cv::Point2i projectedV = projectVoxel(x, y, z, pose, imgScale);
 
-					if (projectedV.x < image.cols && projectedV.y < image.rows)
+					if (projectedV.x < image.cols && projectedV.y < image.rows && projectedV.x > -1 && projectedV.y > -1)
 					{
 						// Vote to carve the voxel if projects to background pixel
-						if (image.at<uint8_t>(projectedV.x, projectedV.y) == 0)
+						if (image.at<uint8_t>(projectedV.y, projectedV.x) == 0)
 						{
 							++vote;
 						}
