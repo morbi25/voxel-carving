@@ -1,14 +1,14 @@
 #include "VoxelGrid.h"
-#include "open3d/Open3D.h"
+//#include "open3d/Open3D.h"
 #include "inc/Eigen.h"
 #include <fstream>
 #include <iostream>
 
 using namespace cv;
-using namespace open3d;
+//using namespace open3d;
 using namespace std;
 
-VoxelGrid::VoxelGrid(int sizeX_, int sizeY_, int sizeZ_, float startX_, float startY_, float startZ_, float step_)
+VoxelGrid::VoxelGrid(int sizeX_, int sizeY_, int sizeZ_, double startX_, double startY_, double startZ_, double step_)
 {
 	// Dimensions of the voxel grid -- Decides number of voxels we have in the voxel grid
 	sizeX = sizeX_;
@@ -131,6 +131,7 @@ void VoxelGrid::toPLY()
 	myfile.close();
 }
 
+/*
 void VoxelGrid::render()
 {
 	VoxelGrid::toPLY();
@@ -139,11 +140,12 @@ void VoxelGrid::render()
 	io::ReadVoxelGrid("voxel_grid.ply", *vg);
 	open3d::visualization::DrawGeometries({vg});
 }
+*/
 
 
-cv::Point3f VoxelGrid::voxelToWorld(int x, int y, int z)
+Point3d VoxelGrid::voxelToWorld(int x, int y, int z)
 {
-	cv::Point3f point;
+	Point3d point;
 	point.x = startX + step * x;
 	point.y = startY + step * y;
 	point.z = startZ + step * z;
@@ -151,20 +153,39 @@ cv::Point3f VoxelGrid::voxelToWorld(int x, int y, int z)
 	return point;
 }
 
-cv::Point2i VoxelGrid::projectVoxel(int x, int y, int z, cv::Mat P)
+
+Point2i VoxelGrid::projectVoxel(int x, int y, int z, Matx44d pose, double imgScale)
 {
-	cv::Point3f voxelWorld = voxelToWorld(x, y, z);
-	cv::Point2i point;
-	float zc = P.at<float>(2, 0) * voxelWorld.x + P.at<float>(2, 1) * voxelWorld.y + P.at<float>(2, 2) * voxelWorld.z + P.at<float>(2, 3);
-	//float zc = 1.0;
+	Matx34d standardProjection(
+		1, 0, 0, 0,
+		0, 1, 0, 0,
+		0, 0, 1, 0
+	);
 
-	point.x = (P.at<float>(0, 0) * voxelWorld.x + P.at<float>(0, 1) * voxelWorld.y + P.at<float>(0, 2) * voxelWorld.z + P.at<float>(0, 3)) / zc;
-	point.y = (P.at<float>(1, 0) * voxelWorld.x + P.at<float>(1, 1) * voxelWorld.y + P.at<float>(1, 2) * voxelWorld.z + P.at<float>(1, 3)) / zc;
+	Matx33d intrinsic(
+		6005.641173008885, 0, 4030.950098307286, 
+		0, 6002.681113514058, 2986.968236297804, 
+		0, 0, 1
+	);
 
-	return point;
+	Matx33d intrinsicScaled = intrinsic * imgScale;
+
+	// General projection matrix from world to screen
+	Matx34d P = intrinsicScaled * (standardProjection * pose);
+
+	Point2i pointPixel;
+	Point3f voxelWorld = voxelToWorld(x, y, z);
+	
+	double zc = P(2, 0) * voxelWorld.x + P(2, 1) * voxelWorld.y + P(2, 2) * voxelWorld.z + P(2, 3);
+	//double zc = 1.0;
+
+	pointPixel.x = (P(0, 0) * voxelWorld.x + P(0, 1) * voxelWorld.y + P(0, 2) * voxelWorld.z + P(0, 3)) / zc;
+	pointPixel.y = (P(1, 0) * voxelWorld.x + P(1, 1) * voxelWorld.y + P(1, 2) * voxelWorld.z + P(1, 3)) / zc;
+
+	return pointPixel;
 }
 
-void VoxelGrid::carve(std::vector<cv::Mat> images, std::vector<cv::Mat> PMatrices, float voteTreshold)
+void VoxelGrid::carve(std::vector<Mat> images, std::vector<Matx44d> poses, double imgScale, float voteTreshold)
 {
 	int numImages = images.size();
 	// Looping over voxels
@@ -179,14 +200,14 @@ void VoxelGrid::carve(std::vector<cv::Mat> images, std::vector<cv::Mat> PMatrice
 				// Looping over images
 				for (int i = 0; i < numImages; ++i)
 				{
-					// One projection matrix from world to pixel coordinates per image
-					cv::Mat P = PMatrices[i];
+					// One projection matrix from world to screen coordinates per image
+					Matx44d pose = poses[i];
 					
 					// Input images need to be grayscale CV_8UC1
-					cv::Mat image = images[i];
+					Mat image =  images[i];
 
 					// Project voxel onto image
-					cv::Point2i projectedV = projectVoxel(x, y, z, P);
+					cv::Point2i projectedV = projectVoxel(x, y, z, pose, imgScale);
 
 					if (projectedV.x < image.cols && projectedV.y < image.rows)
 					{

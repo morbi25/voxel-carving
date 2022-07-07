@@ -4,7 +4,7 @@
 class VoxelGrid
 {
 public:
-	VoxelGrid::VoxelGrid(int sizeX_, int sizeY_, int sizeZ_, float startX_ = 0.0, float startY_ = 0.0, float startZ_ = 0.0, float step_ = 1.0);
+	VoxelGrid::VoxelGrid(int sizeX_, int sizeY_, int sizeZ_, double startX_ = 0.0, double startY_ = 0.0, double startZ_ = 0.0, double step_ = 1.0);
 	~VoxelGrid();
 
 	int getElement(int x, int y, int z);
@@ -14,9 +14,10 @@ public:
 	void toPLY();
 	void render();
 
-	cv::Point3f VoxelGrid::voxelToWorld(int x, int y, int z);
-	cv::Point2i projectVoxel(int x, int y, int z, cv::Mat P);
-	void carve(std::vector<cv::Mat> images, std::vector<cv::Mat> PMatrices, float voteTreshold = 1.0);
+	cv::Point3d VoxelGrid::voxelToWorld(int x, int y, int z);
+	cv::Point2i projectVoxel(int x, int y, int z, cv::Matx44d pose, double imgScale);
+
+	void carve(std::vector<cv::Mat> images, std::vector<cv::Matx44d> poses, double imgScale, float voteTreshold = 1.0);
 	
 	int sizeX, sizeY, sizeZ;
 	float startX, startY, startZ, step;
