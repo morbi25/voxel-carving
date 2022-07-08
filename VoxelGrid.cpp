@@ -195,7 +195,9 @@ Point2i VoxelGrid::projectVoxel(int x, int y, int z, Matx44d pose, double imgSca
 	return pointPixel;
 }
 
-void VoxelGrid::carve(std::vector<Mat> images, std::vector<Matx44d> poses, double imgScale, float voteTreshold)
+
+
+void VoxelGrid::carve(std::vector<Mat> images, std::vector<Matx44d> poses, std::vector<Mat> results, double imgScale, float voteTreshold)
 {
 	int numImages = images.size();
 	// Looping over voxels
@@ -222,9 +224,36 @@ void VoxelGrid::carve(std::vector<Mat> images, std::vector<Matx44d> poses, doubl
 
 					if (projectedV.x < image.cols && projectedV.y < image.rows && projectedV.x > -1 && projectedV.y > -1)
 					{
+						if (x == 0 && y == 0 && z == 0)
+						{
+							circle(results[i], projectedV, 7, Scalar(51, 255, 255), -1);
+							
+						}
+						else if (y == 0 && z == 0) //X
+						{
+							circle(results[i], projectedV, 3, Scalar(0, 0, 255), -1);
+						}
+						else if (x == 0 && z == 0) //y
+						{
+							circle(results[i], projectedV, 3, Scalar(0, 255, 0), -1);
+						}
+						else if (x==0 && y == 0) //z
+						{
+							circle(results[i], projectedV, 3, Scalar(255, 0, 0), -1);
+						}
+
+						circle(results[i], projectedV, 0, Scalar(255, 0, 255), -1);
 						// Vote to carve the voxel if projects to background pixel
 						if (image.at<uint8_t>(projectedV.y, projectedV.x) == 0)
 						{
+							/*
+							std::stringstream ss;
+							ss << x << "," << y << "," << z;
+							std::string s = ss.str();
+
+							putText(results[i], s, projectedV, cv::FONT_HERSHEY_DUPLEX, 0.2, Scalar(128, 128, 128));
+							*/
+							circle(results[i], projectedV, 0, Scalar(128, 128, 128), -1);
 							++vote;
 						}
 					}
