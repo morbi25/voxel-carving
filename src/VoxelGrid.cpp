@@ -1,6 +1,5 @@
-#include "inc/VoxelGrid.h"
-#include "open3d/Open3D.h"
-#include "inc/Eigen.h"
+#include "../inc/VoxelGrid.h"
+#include "../inc/Eigen.h"
 #include <fstream>
 #include <iostream>
 

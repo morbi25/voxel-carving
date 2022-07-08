@@ -1,5 +1,6 @@
 #include <cstdint>
 #include <opencv2/opencv.hpp>
+#include "open3d/Open3D.h"
 
 class VoxelGrid
 {
