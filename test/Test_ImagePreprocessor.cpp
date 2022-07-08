@@ -2,7 +2,7 @@
 #include <opencv2/opencv.hpp>
 #include "gtest/gtest.h"
 
-#include "../src/ImagePreprocessor.cpp"
+#include "../inc/ImagePreprocessor.hpp"
 
 TEST(ImagePreprocessorTest, ReadSingleImageAndExtractForeground)
 {

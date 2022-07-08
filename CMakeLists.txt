@@ -94,7 +94,7 @@ set(SOURCE_FILES
     src/VoxelGrid.cpp
     src/calib_intrinsic.cpp
     src/PoseEstimator.cpp
-    src/VoxelGrid.cpp
+    src/ImagePreprocessor.cpp
 )
 
 link_directories(${FreeImage_LIBRARY_DIR})
