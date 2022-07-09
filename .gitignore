@@ -42,7 +42,7 @@ Build/
 # VSCode settings
 .vscode/
 
-# resources
+# Resources
 resources/
 
 .DS_Store

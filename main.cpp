@@ -2,8 +2,9 @@
 #include <opencv2/opencv.hpp>
 
 #include "inc/Eigen.h"
-#include "calib_intrinsic.cpp"
-#include "VoxelGrid.h"
+#include "src/calib_intrinsic.cpp"
+#include "inc/VoxelGrid.h"
+#include "open3d/Open3D.h"
 
 using namespace cv;
 
