@@ -147,7 +147,7 @@ Point3d VoxelGrid::voxelToWorld(int x, int y, int z)
 	Point3d point;
 	point.x = startX + double(step * x);
 	point.y = startY + double(step * y);
-	point.z = startZ + double(step * z);
+	point.z = startZ - double(step * z);
 
 	return point;
 }
