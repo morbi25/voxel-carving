@@ -6,49 +6,60 @@
 #include "inc/VoxelGrid.h"
 #include "open3d/Open3D.h"
 
+#include <filesystem>
+#include "inc/ImagePreprocessor.hpp"
+
 using namespace cv;
 
 int main(int argc, char **argv)
 {
+    // NILS's part
     VoxelGrid voxelGrid(200, 200, 200, 0.72, -1.3, 0.00, 0.0003);
 
-    std::vector<Mat> images;
-    std::vector<Mat> results;
-    std::vector<Matx44d> poses;
+    std::vector<std::filesystem::path> filepaths;
+    std::vector<cv::Mat> images;
+    std::vector<cv::Mat> results;
+    std::vector<cv::Matx44d> cameraPoses;
+    std::string inDir = "../resources/green_teapot_brown_background_subset/";
+    std::string outDir = "../resources/green_teapot_brown_background_preprocessed/";
+    // Values of rects are manually determined with GIMP
+    std::unordered_map<std::string, cv::Rect> imageNameToRect{{"20220706_214805.jpg", cv::Rect(3364, 1004, 1848, 1476)}, {"20220706_214810.jpg", cv::Rect(3272, 608, 1412, 1560)}};
+    cv::Matx33d cameraMatrix(6005.641173008885, 0, 4030.950098307286, 0, 6002.681113514058, 2986.968236297804, 0, 0, 1);
+    cv::Vec<double, 5> distCoeffs(0.08170529228771495, -0.2834249429739051, 0.0007430954776429432, 0.0006295724080059367, 0.3968821057473708);
+    ImagePreprocessor imPrep(cameraMatrix, distCoeffs);
 
-    Mat image1C = imread("..\\resources\\Examples\\20220706_214805_foreground_fix.jpg");
-    Mat image1(1000, 750, CV_8UC1);
-    cvtColor(image1C, image1, COLOR_BGR2GRAY);
+#ifdef DO_FOREGROUND_SEGMENTATION
+    imPrep.readImagesAndComputeCameraPoses(filepaths, images, cameraPoses, inDir, false, imageNameToRect, 2);
+#else
+    imPrep.readImagesAndComputeCameraPoses(filepaths, images, cameraPoses, inDir, true);
+#endif
 
-    Mat image2C = imread("..\\resources\\Examples\\20220706_214810_foreground_fix.jpg");
-    Mat image2(1000, 750, CV_8UC1);
-    cvtColor(image2C, image2, COLOR_BGR2GRAY);
+    for (unsigned int i = 0; i < std::min(filepaths.size(), images.size()); i++)
+    {
+        std::string filename = filepaths.at(i).filename().string();
+#ifdef DO_FOREGROUND_SEGMENTATION
+        std::string extension = "_foreground.jpg";
+#else
+        std::string extension = "_markers.jpg";
+#endif
+        cv::imwrite(outDir + filename.substr(0, filename.find_last_of(".")) + extension, images[i]);
+        std::cout << cameraPoses[i] << std::endl;
+    }
 
-    //images.push_back(image1);
-    //results.push_back(image1C);
-    images.push_back(image2);
-    results.push_back(image2C);
+    // for loop over images
+    for (int i = 0; i < images.size(); i++)
+    {
+        cv::Mat image1C = images[i];
+        Mat image1(1000, 750, CV_8UC1);
+        cvtColor(image1C, image1, COLOR_BGR2GRAY);
+        results.push_back(image1);
+    }
 
-    Matx44d pose1(
-        -0.7731083419143783, -0.5281222579736478, 0.3512696575214211, -0.123085193094924,
-        -0.6325915190749175, 0.6017026575313881, -0.4876288362209038, 0.4701735189239425,
-        0.04616775559726605, -0.5992001272967828, -0.799267005318392, 0.3446566037210394,
-        0, 0, 0, 1);
-
-    Matx44d pose2(
-        -0.9974029574492606, 0.03003503696173567, -0.06546172183937367, 0.1561629506843841,
-        0.06222039443917605, 0.8171126077748148, -0.5731104681745707, 0.5122759528158224,
-        0.03627620414681929, -0.5756951300559606, -0.8168593234104322, 0.36288435310979,
-        0, 0, 0, 1);
-    
-    //poses.push_back(pose1);
-    poses.push_back(pose2);
-
-    voxelGrid.carve(images, poses, results, 0.125);
-    //voxelGrid.toPLY();
+    voxelGrid.carve(results, cameraPoses, images, 0.125);
+    voxelGrid.toPLY();
 
     namedWindow("Display Image", WINDOW_AUTOSIZE);
-    imshow("Display Image", results[0]);
+    imshow("Display Image", images[0]);
     waitKey(0);
 
     return 0;
