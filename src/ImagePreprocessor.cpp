@@ -39,6 +39,15 @@ void ImagePreprocessor::doForegroundSegmentation(cv::Mat &foregroundImage, cv::M
             {
                 mask.at<uchar>(j, k) = cv::GrabCutClasses::GC_BGD;
             }
+            cv::Vec3b pixel = image.at<cv::Vec3b>(j, k);
+            if (mask.at<uchar>(j, k) == cv::GrabCutClasses::GC_FGD || mask.at<uchar>(j, k) == cv::GrabCutClasses::GC_PR_FGD)
+            {
+                double BRTreshold = pixel.val[1] * 1.3;
+                if (pixel.val[1] < 40 || (double)pixel.val[0] + (double)pixel.val[2] > BRTreshold)
+                {
+                    mask.at<uchar>(j, k) = cv::GrabCutClasses::GC_BGD;
+                }
+            }
         }
     }
 
