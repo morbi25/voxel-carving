@@ -92,7 +92,7 @@ void VoxelGrid::toPLY()
 		}
 	}
 
-	std::cout << "EXPORT STARTING, NUMBER OF VOXELS:" << count << endl;
+	// std::cout << "EXPORT STARTING, NUMBER OF VOXELS:" << count << endl;
 
 	myfile << "ply" << endl;
 	myfile << "format ascii 1.0" << endl;
@@ -117,7 +117,7 @@ void VoxelGrid::toPLY()
 
 	for (int z = 0; z < sizeZ; ++z)
 	{
-		std::cout << "Exporting Z:" << z << endl;
+		// std::cout << "Exporting Z:" << z << endl;
 		for (int x = 0; x < sizeX; ++x)
 		{
 			for (int y = 0; y < sizeY; ++y)
@@ -186,13 +186,13 @@ Point2i VoxelGrid::projectVoxel(int x, int y, int z, Matx44d pose, double imgSca
 	return pointPixel;
 }
 
-void VoxelGrid::carve(std::vector<Mat> images, std::vector<Matx44d> poses, std::vector<Mat> results, double imgScale, float voteTreshold)
+void VoxelGrid::carve(std::vector<Mat> images, std::vector<Matx44d> poses, std::vector<Mat> results, double imgScale, float voteThreshold)
 {
 	int numImages = images.size();
 	// Looping over voxels
 	for (int x = 0; x < sizeX; ++x)
 	{
-		std::cout << "Carving X:" << x << std::endl;
+		// std::cout << "Carving X:" << x << std::endl;
 		for (int y = 0; y < sizeY; ++y)
 		{
 			for (int z = 0; z < sizeZ; ++z)
@@ -247,7 +247,7 @@ void VoxelGrid::carve(std::vector<Mat> images, std::vector<Matx44d> poses, std::
 					}
 				}
 				// If enough votes to carve the voxel (1.0 = all votes needed)
-				if (vote >= voteTreshold * numImages)
+				if (vote >= voteThreshold * numImages)
 				{
 					setElement(x, y, z, 0);
 					// std::cout << "carved at:"<<  x << ", " << y << ", " << z << endl;
