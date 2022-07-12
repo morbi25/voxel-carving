@@ -184,9 +184,16 @@ Point2i VoxelGrid::projectVoxel(int x, int y, int z, Matx44d pose, double imgSca
 	return pointPixel;
 }
 
-void VoxelGrid::carve(std::vector<Mat> images, std::vector<Matx44d> poses, std::vector<Mat> results, double imgScale, float voteThreshold)
+void VoxelGrid::carve(std::vector<Mat> images, std::vector<Matx44d> poses, 
+
+#ifdef DO_GRID_VISUALIZATION
+	std::vector<Mat> results,
+#endif
+	double imgScale, float voteThreshold)
+
 {
 	int numImages = images.size();
+	
 	// Looping over voxels
 	for (int x = 0; x < sizeX; ++x)
 	{
@@ -211,7 +218,10 @@ void VoxelGrid::carve(std::vector<Mat> images, std::vector<Matx44d> poses, std::
 
 					if (projectedV.x < image.cols && projectedV.y < image.rows && projectedV.x > -1 && projectedV.y > -1)
 					{
-						if (x == 0 && y == 0 && z == 0)
+#ifdef DO_GRID_VISUALIZATION
+						// Draw START CORNER (yellow), X (red), Y (green), Z (blue) axis of the grid
+						
+						if (x == 0 && y == 0 && z == 0) // START CORNER
 						{
 							circle(results[i], projectedV, 7, Scalar(51, 255, 255), -1);
 						}
@@ -219,27 +229,37 @@ void VoxelGrid::carve(std::vector<Mat> images, std::vector<Matx44d> poses, std::
 						{
 							circle(results[i], projectedV, 3, Scalar(0, 0, 255), -1);
 						}
-						else if (x == 0 && z == 0) // y
+						else if (x == 0 && z == 0) // Y
 						{
 							circle(results[i], projectedV, 3, Scalar(0, 255, 0), -1);
 						}
-						else if (x == 0 && y == 0) // z
+						else if (x == 0 && y == 0) // Z
 						{
 							circle(results[i], projectedV, 3, Scalar(255, 0, 0), -1);
 						}
 
-						circle(results[i], projectedV, 0, Scalar(255, 0, 255), -1);
+						// Draw voxels in the grid that project to foregroud (purple) (Dont hide axis)
+						Vec3b prevPixel = results[i].at<Vec3b>(projectedV.y, projectedV.x);
+						if (!(prevPixel.val[0] == 0 && prevPixel.val[1] == 0 && prevPixel.val[2] == 255)
+							&& !(prevPixel.val[0] == 0 && prevPixel.val[1] == 255 && prevPixel.val[2] == 0)
+							&& !(prevPixel.val[0] == 255 && prevPixel.val[1] == 0 && prevPixel.val[2] == 0))
+						{
+							circle(results[i], projectedV, 0, Scalar(255, 0, 255), -1);
+						}
+						
+#endif
 						// Vote to carve the voxel if projects to background pixel
 						if (image.at<uint8_t>(projectedV.y, projectedV.x) == 0)
 						{
-							/*
-							std::stringstream ss;
-							ss << x << "," << y << "," << z;
-							std::string s = ss.str();
-
-							putText(results[i], s, projectedV, cv::FONT_HERSHEY_DUPLEX, 0.2, Scalar(128, 128, 128));
-							*/
-							circle(results[i], projectedV, 0, Scalar(128, 128, 128), -1);
+#ifdef DO_GRID_VISUALIZATION		
+							// Draw voxels in the grid that project to backgroud (gray) (Dont hide axis)
+							if (!(prevPixel.val[0] == 0 && prevPixel.val[1] == 0 && prevPixel.val[2] == 255)
+								&& !(prevPixel.val[0] == 0 && prevPixel.val[1] == 255 && prevPixel.val[2] == 0)
+								&& !(prevPixel.val[0] == 255 && prevPixel.val[1] == 0 && prevPixel.val[2] == 0))
+							{
+								circle(results[i], projectedV, 0, Scalar(128, 128, 128), -1);
+							}
+#endif
 							++vote;
 						}
 					}
@@ -248,7 +268,6 @@ void VoxelGrid::carve(std::vector<Mat> images, std::vector<Matx44d> poses, std::
 				if (vote >= voteThreshold * numImages)
 				{
 					setElement(x, y, z, 0);
-					// std::cout << "carved at:"<<  x << ", " << y << ", " << z << endl;
 				}
 			}
 		}

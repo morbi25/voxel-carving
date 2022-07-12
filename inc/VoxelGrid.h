@@ -2,6 +2,8 @@
 #include <opencv2/opencv.hpp>
 #include "open3d/Open3D.h"
 
+#define DO_GRID_VISUALIZATION
+
 class VoxelGrid
 {
 public:
@@ -18,7 +20,11 @@ public:
 	cv::Point3d voxelToWorld(int x, int y, int z);
 	cv::Point2i projectVoxel(int x, int y, int z, cv::Matx44d pose, double imgScale);
 
-	void carve(std::vector<cv::Mat> images, std::vector<cv::Matx44d> poses, std::vector<cv::Mat> results, double imgScale, float voteTreshold = 1.0);
+	void carve(std::vector<cv::Mat> images, std::vector<cv::Matx44d> poses, 
+#ifdef DO_GRID_VISUALIZATION
+		std::vector<cv::Mat> results, 
+#endif
+		double imgScale, float voteTreshold = 1.0);
 
 	int sizeX, sizeY, sizeZ;
 	double startX, startY, startZ, step;
