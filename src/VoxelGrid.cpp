@@ -159,12 +159,10 @@ Point2i VoxelGrid::projectVoxel(int x, int y, int z, Matx44d pose, double imgSca
 		0, 1, 0, 0,
 		0, 0, 1, 0);
 
-	Matx33d intrinsic(
-		6005.641173008885, 0, 4030.950098307286,
-		0, 6002.681113514058, 2986.968236297804,
+	Matx33d intrinsicScaled(
+		6005.641173008885 * imgScale, 0, 4030.950098307286 * imgScale,
+		0, 6002.681113514058 * imgScale, 2986.968236297804 * imgScale,
 		0, 0, 1);
-
-	Matx33d intrinsicScaled = intrinsic * imgScale;
 
 	// General projection matrix from world to camera to screen
 	Matx34d P = intrinsicScaled * (standardProjection * pose);

@@ -14,7 +14,7 @@ using namespace cv;
 int main(int argc, char **argv)
 {
     // NILS's part
-    VoxelGrid voxelGrid(200, 200, 200, 0.72, -1.3, 0.00, 0.0003);
+    VoxelGrid voxelGrid(200, 200, 200, 0, 0, 0, 0.01);
 
     std::vector<std::filesystem::path> filepaths;
     std::vector<cv::Mat> images;
@@ -55,11 +55,14 @@ int main(int argc, char **argv)
         results.push_back(image1);
     }
 
-    voxelGrid.carve(results, cameraPoses, images, 0.125);
+    voxelGrid.carve(results, cameraPoses, images, 0.125, 0.1);
     voxelGrid.toPLY();
 
     namedWindow("Display Image", WINDOW_AUTOSIZE);
     imshow("Display Image", images[0]);
+    waitKey(0);
+    namedWindow("Display Image", WINDOW_AUTOSIZE);
+    imshow("Display Image", images[1]);
     waitKey(0);
 
     return 0;

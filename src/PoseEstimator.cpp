@@ -3,7 +3,6 @@
 
 #include "../inc/PoseEstimator.hpp"
 
-
 PoseEstimator::PoseEstimator(cv::Matx33d cameraMatrix, cv::Vec<double, 5> distCoeffs, cv::aruco::PREDEFINED_DICTIONARY_NAME dictType)
     : mCameraMatrix(std::move(cameraMatrix)), mDistCoeffs(std::move(distCoeffs)), mDictionary(cv::aruco::getPredefinedDictionary(dictType))
 {
@@ -48,9 +47,9 @@ cv::Matx44d PoseEstimator::computeCameraPoseMatrixFromBoardPose(const cv::Mat &r
 
     // Bundle rotation and translation into one rigid transformation matrix
     cv::Mat cameraToWorld(cv::Mat::eye(4, 4, CV_64F));
-    cv::Mat minor = cameraToWorld.colRange(0,3).rowRange(0,3);
+    cv::Mat minor = cameraToWorld.colRange(0, 3).rowRange(0, 3);
     cameraRMat.copyTo(minor);
-    minor = cameraToWorld.colRange(3,4).rowRange(0,3);
+    minor = cameraToWorld.colRange(3, 4).rowRange(0, 3);
     tVec.copyTo(minor);
 
     cv::Matx44d cameraToWorld44;
@@ -60,5 +59,5 @@ cv::Matx44d PoseEstimator::computeCameraPoseMatrixFromBoardPose(const cv::Mat &r
     // rvec Output vector [x,y,z] corresponding to the rotation vector of the board
     // tvec Output vector [x,y,z] corresponding to the translation vector of the board
     // To get the transformation from board to camera we must compute the inverse
-    return cameraToWorld44.inv();
+    return cameraToWorld44;
 }
