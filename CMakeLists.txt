@@ -7,14 +7,20 @@ project(voxel_carving)
 # Options
 set(LIBRARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Libs CACHE PATH "Path to lib folder")
 set(Eigen3_DIR ${LIBRARY_DIR}/Eigen/share/eigen3/cmake CACHE PATH "Path to installed Eigen")
-set(Open3D_DIR ${CMAKE_CURRENT_BINARY_DIR}/open3d/lib/cmake/Open3D CACHE PATH "Path to installed o3d")
 # Configure Source & Binary Directories ---------------------------------------
 set(PROJECT_ROOT "${PROJECT_SOURCE_DIR}")
 set(PROJECT_SOURCE_DIR "${PROJECT_SOURCE_DIR}/src")
 # set (OpenCV_DIR /home/cmake/opencv/compiled CACHE PATH "Path to installed OpenCV")
 find_package( OpenCV REQUIRED )
+
+set(OPEN3D_EXISTS TRUE)
+if (OPEN3D_EXISTS)
+    # https://github.com/isl-org/Open3D/releases/download/v0.15.1/open3d-devel-linux-x86_64-cxx11-abi-0.15.1.tar.xz
+    set(Open3D_DIR ${CMAKE_CURRENT_BINARY_DIR}/open3d/lib/cmake/Open3D CACHE PATH "Path to installed o3d")
+    find_package( Open3D REQUIRED )
+endif ()
+
 find_package( Eigen3 REQUIRED )
-find_package( Open3D REQUIRED )
 include_directories( ${OpenCV_INCLUDE_DIRS} )
 
 # GoogleTest
@@ -43,7 +49,7 @@ else()
 endif()
 
 
-if (NOT Open3D_FOUND)
+if (NOT OPEN3D_EXISTS)
     include(ExternalProject)
     ExternalProject_Add(
         external_open3d
