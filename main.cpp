@@ -22,7 +22,7 @@ int main(int argc, char **argv)
     std::vector<cv::Matx44d> cameraPoses;
     std::string inDir = "../resources/green_teapot_brown_background_subset/";
     std::string outDir = "../resources/green_teapot_brown_background_preprocessed/";
-    
+
     // Values of rects are manually determined with GIMP
     std::unordered_map<std::string, cv::Rect> imageNameToRect{
         {"20220706_214805.jpg", cv::Rect(3364, 1004, 1848, 1476)},
@@ -79,8 +79,8 @@ int main(int argc, char **argv)
         imshow("Display Image", images[i]);
         waitKey(0);
     }
-    
-    voxelGrid.toPLY();
+
+    voxelGrid.render();
 
     return 0;
 }
