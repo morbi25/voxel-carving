@@ -115,7 +115,10 @@ void ImagePreprocessor::readImagesAndComputeCameraPoses(std::vector<std::filesys
         image = cv::imread(filepath.string());
 
         // Estimate marker poses
-        mPoseEstimator.estimateMarkerPoses(ids, corners, rVec, tVec, image);
+        if (!mPoseEstimator.estimateMarkerPoses(ids, corners, rVec, tVec, image))
+        {
+            continue;
+        }
 
         // Draw ArUco markers and axis on image
         if (drawMarkersAndAxisOnImage)

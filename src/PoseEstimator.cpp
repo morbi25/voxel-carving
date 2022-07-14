@@ -8,7 +8,7 @@ PoseEstimator::PoseEstimator(cv::Matx33d cameraMatrix, cv::Vec<double, 5> distCo
 {
 }
 
-void PoseEstimator::estimateMarkerPoses(std::vector<int> &ids, std::vector<std::vector<cv::Point2f>> &corners, cv::Mat &rVec, cv::Mat &tVec, const cv::Mat &image)
+bool PoseEstimator::estimateMarkerPoses(std::vector<int> &ids, std::vector<std::vector<cv::Point2f>> &corners, cv::Mat &rVec, cv::Mat &tVec, const cv::Mat &image)
 {
     cv::Ptr<cv::aruco::GridBoard> board = cv::aruco::GridBoard::create(5, 7, 0.04, 0.01, mDictionary);
 
@@ -18,10 +18,12 @@ void PoseEstimator::estimateMarkerPoses(std::vector<int> &ids, std::vector<std::
     if (ids.size() > 0)
     {
         cv::aruco::estimatePoseBoard(corners, ids, board, mCameraMatrix, mDistCoeffs, rVec, tVec);
+        return true;
     }
     else
     {
         std::cout << ("Cannot determine camera pose since no ArUco marker was detected.") << std::endl;
+        return false;
     }
 }
 
