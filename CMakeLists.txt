@@ -23,6 +23,7 @@ endif ()
 find_package( Eigen3 REQUIRED )
 include_directories( ${OpenCV_INCLUDE_DIRS} )
 
+if(WIN32 OR MACOS)
 # GoogleTest
 include(FetchContent)
 FetchContent_Declare(
@@ -82,6 +83,7 @@ if (NOT OPEN3D_EXISTS)
     target_link_directories(Open3DHelper INTERFACE "${INSTALL_DIR}/lib")
     target_link_libraries(Open3DHelper INTERFACE Open3D)
     add_library(Open3D::Open3D ALIAS Open3DHelper)
+endif()
 endif()
 
 # Set C++ flags
