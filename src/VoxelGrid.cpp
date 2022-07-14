@@ -1,11 +1,10 @@
-#include "../inc/VoxelGrid.h"
-#include "../inc/Eigen.h"
 #include <fstream>
 #include <iostream>
 
-using namespace cv;
-using namespace open3d;
-using namespace std;
+#include "../inc/VoxelGrid.h"
+#include "../inc/Eigen.h"
+
+
 
 VoxelGrid::VoxelGrid(int sizeX_, int sizeY_, int sizeZ_, double startX_, double startY_, double startZ_, double step_)
 {
@@ -56,12 +55,12 @@ void VoxelGrid::setElement(int x, int y, int z, uint8_t val)
 	}
 }
 
-void VoxelGrid::carveSingleImg(Mat img)
+void VoxelGrid::carveSingleImg(cv::Mat img)
 {
-	Mat resizedImg;
-	resize(img, resizedImg, Size(sizeX, sizeY));
-	Mat grayImg(sizeX, sizeY, CV_8UC1);
-	cvtColor(resizedImg, grayImg, COLOR_BGR2GRAY);
+	cv::Mat resizedImg;
+	resize(img, resizedImg, cv::Size(sizeX, sizeY));
+	cv::Mat grayImg(sizeX, sizeY, CV_8UC1);
+	cvtColor(resizedImg, grayImg, cv::COLOR_BGR2GRAY);
 
 	for (int z = 0; z < sizeZ; ++z)
 	{
@@ -77,7 +76,7 @@ void VoxelGrid::carveSingleImg(Mat img)
 
 void VoxelGrid::toPLY()
 {
-	ofstream myfile;
+	std::ofstream myfile;
 	myfile.open("voxel_grid.ply");
 	int count = 0;
 	for (int z = 0; z < sizeZ; ++z)
@@ -94,26 +93,26 @@ void VoxelGrid::toPLY()
 
 	// std::cout << "EXPORT STARTING, NUMBER OF VOXELS:" << count << endl;
 
-	myfile << "ply" << endl;
-	myfile << "format ascii 1.0" << endl;
-	myfile << "comment Created by Open3D" << endl;
-	// myfile << "element origin 1" << endl;
-	// myfile << "property double x" << endl;
-	// myfile << "property double y" << endl;
-	// myfile << "property double z" << endl;
-	myfile << "element voxel_size 1" << endl;
-	myfile << "property double val" << endl;
-	myfile << "element vertex " << count << endl;
-	myfile << "property double x" << endl;
-	myfile << "property double y" << endl;
-	myfile << "property double z" << endl;
-	myfile << "property uchar red" << endl;
-	myfile << "property uchar green" << endl;
-	myfile << "property uchar blue" << endl;
-	myfile << "end_header" << endl;
+	myfile << "ply" << std::endl;
+	myfile << "format ascii 1.0" << std::endl;
+	myfile << "comment Created by Open3D" << std::endl;
+	// myfile << "element origin 1" << std::endl;
+	// myfile << "property double x" << std::endl;
+	// myfile << "property double y" << std::endl;
+	// myfile << "property double z" << std::endl;
+	myfile << "element voxel_size 1" << std::endl;
+	myfile << "property double val" << std::endl;
+	myfile << "element vertex " << count << std::endl;
+	myfile << "property double x" << std::endl;
+	myfile << "property double y" << std::endl;
+	myfile << "property double z" << std::endl;
+	myfile << "property uchar red" << std::endl;
+	myfile << "property uchar green" << std::endl;
+	myfile << "property uchar blue" << std::endl;
+	myfile << "end_header" << std::endl;
 
 	// myfile << 0 << " " << 0 << " " << 0 << endl;
-	myfile << 0.5 << endl;
+	myfile << 0.5 << std::endl;
 
 	for (int z = 0; z < sizeZ; ++z)
 	{
@@ -124,7 +123,7 @@ void VoxelGrid::toPLY()
 			{
 				if (grid[z][x][y] == 1)
 				{
-					myfile << x << " " << y << " " << z << " " << 0 << " " << 255 << " " << 0 << endl;
+					myfile << x << " " << y << " " << z << " " << 0 << " " << 255 << " " << 0 << std::endl;
 				}
 			}
 		}
@@ -137,14 +136,14 @@ void VoxelGrid::render()
 {
 	VoxelGrid::toPLY();
 	// create new VoxelGrid object
-	auto vg = std::make_shared<geometry::VoxelGrid>();
-	io::ReadVoxelGrid("voxel_grid.ply", *vg);
+	auto vg = std::make_shared<open3d::geometry::VoxelGrid>();
+	open3d::io::ReadVoxelGrid("voxel_grid.ply", *vg);
 	open3d::visualization::DrawGeometries({vg});
 }
 
-Point3d VoxelGrid::voxelToWorld(int x, int y, int z)
+cv::Point3d VoxelGrid::voxelToWorld(int x, int y, int z)
 {
-	Point3d point;
+	cv::Point3d point;
 	point.x = startX + double(step * x);
 	point.y = startY + double(step * y);
 	point.z = startZ + double(step * z);
@@ -152,31 +151,31 @@ Point3d VoxelGrid::voxelToWorld(int x, int y, int z)
 	return point;
 }
 
-Point2i VoxelGrid::projectVoxel(int x, int y, int z, Matx44d pose, double imgScale)
+cv::Point2i VoxelGrid::projectVoxel(int x, int y, int z, cv::Matx44d pose, double imgScale)
 {
-	Matx34d standardProjection(
+	cv::Matx34d standardProjection(
 		1, 0, 0, 0,
 		0, 1, 0, 0,
 		0, 0, 1, 0);
 
-	Matx33d intrinsicScaled(
+	cv::Matx33d intrinsicScaled(
 		6005.641173008885 * imgScale, 0, 4030.950098307286 * imgScale,
 		0, 6002.681113514058 * imgScale, 2986.968236297804 * imgScale,
 		0, 0, 1);
 
 	// General projection matrix from world to camera to screen
-	Matx34d P = intrinsicScaled * (standardProjection * pose);
+	cv::Matx34d P = intrinsicScaled * (standardProjection * pose);
 
 	// 2D pixel point on screen
-	Point2i pointPixel;
+	cv::Point2i pointPixel;
 
 	// 3D world coordinates of the voxel
-	Point3d voxelWorld = voxelToWorld(x, y, z);
+	cv::Point3d voxelWorld = voxelToWorld(x, y, z);
 
 	// 4D world coordinates of the voxel (3D, 1)
-	Matx41d voxelWorld4d(voxelWorld.x, voxelWorld.y, voxelWorld.z, 1.0);
+	cv::Matx41d voxelWorld4d(voxelWorld.x, voxelWorld.y, voxelWorld.z, 1.0);
 
-	Matx31d Pixel3d = P * voxelWorld4d;
+	cv::Matx31d Pixel3d = P * voxelWorld4d;
 
 	pointPixel.x = Pixel3d(0, 0) / Pixel3d(2, 0);
 	pointPixel.y = Pixel3d(1, 0) / Pixel3d(2, 0);
@@ -184,10 +183,10 @@ Point2i VoxelGrid::projectVoxel(int x, int y, int z, Matx44d pose, double imgSca
 	return pointPixel;
 }
 
-void VoxelGrid::carve(std::vector<Mat> images, std::vector<Matx44d> poses,
+void VoxelGrid::carve(std::vector<cv::Mat> images, std::vector<cv::Matx44d> poses,
 
 #ifdef DO_GRID_VISUALIZATION
-					  std::vector<Mat> results,
+					  std::vector<cv::Mat> results,
 #endif
 					  double imgScale, float voteThreshold)
 
@@ -208,10 +207,10 @@ void VoxelGrid::carve(std::vector<Mat> images, std::vector<Matx44d> poses,
 				for (int i = 0; i < numImages; ++i)
 				{
 					// One projection matrix from world to screen coordinates per image
-					Matx44d pose = poses[i];
+					cv::Matx44d pose = poses[i];
 
 					// Input images need to be grayscale CV_8UC1
-					Mat image = images[i];
+					cv::Mat image = images[i];
 
 					// Project voxel onto image
 					cv::Point2i projectedV = projectVoxel(x, y, z, pose, imgScale);
@@ -223,26 +222,26 @@ void VoxelGrid::carve(std::vector<Mat> images, std::vector<Matx44d> poses,
 
 						if (x == 0 && y == 0 && z == 0) // START CORNER
 						{
-							circle(results[i], projectedV, 7, Scalar(51, 255, 255), -1);
+							circle(results[i], projectedV, 7, cv::Scalar(51, 255, 255), -1);
 						}
 						else if (y == 0 && z == 0) // X
 						{
-							circle(results[i], projectedV, 3, Scalar(0, 0, 255), -1);
+							circle(results[i], projectedV, 3, cv::Scalar(0, 0, 255), -1);
 						}
 						else if (x == 0 && z == 0) // Y
 						{
-							circle(results[i], projectedV, 3, Scalar(0, 255, 0), -1);
+							circle(results[i], projectedV, 3, cv::Scalar(0, 255, 0), -1);
 						}
 						else if (x == 0 && y == 0) // Z
 						{
-							circle(results[i], projectedV, 3, Scalar(255, 0, 0), -1);
+							circle(results[i], projectedV, 3, cv::Scalar(255, 0, 0), -1);
 						}
 
 						// Draw voxels in the grid that project to foregroud (purple) (Dont hide axis)
-						Vec3b prevPixel = results[i].at<Vec3b>(projectedV.y, projectedV.x);
+						cv::Vec3b prevPixel = results[i].at<cv::Vec3b>(projectedV.y, projectedV.x);
 						if (!(prevPixel.val[0] == 0 && prevPixel.val[1] == 0 && prevPixel.val[2] == 255) && !(prevPixel.val[0] == 0 && prevPixel.val[1] == 255 && prevPixel.val[2] == 0) && !(prevPixel.val[0] == 255 && prevPixel.val[1] == 0 && prevPixel.val[2] == 0))
 						{
-							circle(results[i], projectedV, 0, Scalar(255, 0, 255), -1);
+							circle(results[i], projectedV, 0, cv::Scalar(255, 0, 255), -1);
 						}
 
 #endif
@@ -253,7 +252,7 @@ void VoxelGrid::carve(std::vector<Mat> images, std::vector<Matx44d> poses,
 							// Draw voxels in the grid that project to backgroud (gray) (Dont hide axis)
 							if (!(prevPixel.val[0] == 0 && prevPixel.val[1] == 0 && prevPixel.val[2] == 255) && !(prevPixel.val[0] == 0 && prevPixel.val[1] == 255 && prevPixel.val[2] == 0) && !(prevPixel.val[0] == 255 && prevPixel.val[1] == 0 && prevPixel.val[2] == 0))
 							{
-								circle(results[i], projectedV, 0, Scalar(128, 128, 128), -1);
+								circle(results[i], projectedV, 0, cv::Scalar(128, 128, 128), -1);
 							}
 #endif
 							++vote;

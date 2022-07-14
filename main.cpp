@@ -1,15 +1,12 @@
 #include <stdio.h>
+#include <filesystem>
 #include <opencv2/opencv.hpp>
 
 #include "inc/Eigen.h"
+#include "inc/ImagePreprocessor.hpp"
 #include "src/calib_intrinsic.cpp"
 #include "inc/VoxelGrid.h"
 #include "open3d/Open3D.h"
-
-#include <filesystem>
-#include "inc/ImagePreprocessor.hpp"
-
-using namespace cv;
 
 int main(int argc, char **argv)
 {
@@ -66,8 +63,8 @@ int main(int argc, char **argv)
     for (int i = 0; i < images.size(); i++)
     {
         cv::Mat image1C = images[i];
-        Mat image1(1000, 750, CV_8UC1);
-        cvtColor(image1C, image1, COLOR_BGR2GRAY);
+        cv::Mat image1(1000, 750, CV_8UC1);
+        cv::cvtColor(image1C, image1, cv::COLOR_BGR2GRAY);
         results.push_back(image1);
     }
 
@@ -75,9 +72,9 @@ int main(int argc, char **argv)
 
     for (int i = 0; i < images.size(); i++)
     {
-        namedWindow("Display Image", WINDOW_AUTOSIZE);
-        imshow("Display Image", images[i]);
-        waitKey(0);
+        cv::namedWindow("Display Image", cv::WINDOW_AUTOSIZE);
+        cv::imshow("Display Image", images[i]);
+        cv::waitKey(0);
     }
 
     voxelGrid.render();
