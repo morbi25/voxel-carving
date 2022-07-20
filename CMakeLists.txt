@@ -12,6 +12,7 @@ set(PROJECT_ROOT "${PROJECT_SOURCE_DIR}")
 set(PROJECT_SOURCE_DIR "${PROJECT_SOURCE_DIR}/src")
 # set (OpenCV_DIR /home/cmake/opencv/compiled CACHE PATH "Path to installed OpenCV")
 find_package( OpenCV REQUIRED )
+find_package( OpenMP REQUIRED ) # disable if you don't want OpenMP support
 
 set(OPEN3D_EXISTS TRUE)
 if (OPEN3D_EXISTS)
@@ -29,20 +30,23 @@ FetchContent_Declare(
   googletest
   URL https://github.com/google/googletest/archive/609281088cfefc76f9d0ce82e1ff6c30cc3591e5.zip
 )
-
-if(WIN32 OR MACOS)
 # For Windows: Prevent overriding the parent project's compiler/linker settings
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
-
-# Open3D
-option(GLIBCXX_USE_CXX11_ABI   "Set -D_GLIBCXX_USE_CXX11_ABI=1"       OFF)
-option(STATIC_WINDOWS_RUNTIME  "Use static (MT/MTd) Windows runtime"  ON )
 
 if(NOT CMAKE_BUILD_TYPE)
     message(STATUS "No CMAKE_BUILD_TYPE specified, default to Release.")
     set(CMAKE_BUILD_TYPE "Release")
 endif()
+
+# set(CMAKE_CXX_FLAGS "-Wall -Wextra")
+# set(CMAKE_CXX_FLAGS_DEBUG "-g")
+# set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native -fopenmp") no need for now
+
+if(WIN32 OR MACOS)
+# Open3D
+option(GLIBCXX_USE_CXX11_ABI   "Set -D_GLIBCXX_USE_CXX11_ABI=1"       OFF)
+option(STATIC_WINDOWS_RUNTIME  "Use static (MT/MTd) Windows runtime"  ON )
 
 if(STATIC_WINDOWS_RUNTIME)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
@@ -108,13 +112,13 @@ set(SOURCE_FILES
 
 link_directories(${FreeImage_LIBRARY_DIR})
 add_executable(voxel_carving main.cpp ${HEADER_FILES} ${SOURCE_FILES})
-target_link_libraries(voxel_carving ${OpenCV_LIBS} Eigen3::Eigen Open3D::Open3D)
+target_link_libraries(voxel_carving ${OpenCV_LIBS} Eigen3::Eigen Open3D::Open3D OpenMP::OpenMP_CXX)
 target_include_directories(voxel_carving PUBLIC ${EIGEN3_INCLUDE_DIR})
 target_sources(voxel_carving PRIVATE ${SOURCE_FILES})
 
 # Unit Tests
 add_executable(test_voxel_carving test/Test_ImagePreprocessor.cpp)
-target_link_libraries(test_voxel_carving ${OpenCV_LIBS} Eigen3::Eigen Open3D::Open3D gtest gtest_main)
+target_link_libraries(test_voxel_carving ${OpenCV_LIBS} Eigen3::Eigen Open3D::Open3D gtest gtest_main OpenMP::OpenMP_CXX)
 target_include_directories(voxel_carving PUBLIC ${EIGEN3_INCLUDE_DIR})
 add_test( test_voxel_carving test_voxel_carving )
 target_sources(test_voxel_carving PRIVATE ${SOURCE_FILES})

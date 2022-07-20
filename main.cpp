@@ -8,7 +8,7 @@
 #include "inc/VoxelGrid.h"
 #include "open3d/Open3D.h"
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     // NILS's part
     VoxelGrid voxelGrid(400, 400, 150, 0, 0, 0, 0.0007);
@@ -81,14 +81,15 @@ int main(int argc, char** argv)
 
     voxelGrid.carve(results, cameraPoses, images, 0.125, 0.1);
 
-    for (int i = 0; i < images.size(); i++)
-    {
-        cv::namedWindow("Display Image", cv::WINDOW_AUTOSIZE);
-        cv::imshow("Display Image", images[i]);
-        cv::waitKey(0);
-    }
+    // for (int i = 0; i < images.size(); i++)
+    // {
+    //     cv::namedWindow("Display Image", cv::WINDOW_AUTOSIZE);
+    //     cv::imshow("Display Image", images[i]);
+    //     cv::waitKey(0);
+    // }
 
-    voxelGrid.render();
+    voxelGrid.toPLY();
+    // voxelGrid.render();
 
     return 0;
 }

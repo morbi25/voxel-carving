@@ -3,9 +3,7 @@
 
 #include "../inc/VoxelGrid.h"
 #include "../inc/Eigen.h"
-
-
-
+#include <omp.h>
 VoxelGrid::VoxelGrid(int sizeX_, int sizeY_, int sizeZ_, double startX_, double startY_, double startZ_, double step_)
 {
 	// Dimensions of the voxel grid -- Decides number of voxels we have in the voxel grid
@@ -194,6 +192,7 @@ void VoxelGrid::carve(std::vector<cv::Mat> images, std::vector<cv::Matx44d> pose
 	int numImages = images.size();
 
 	// Looping over voxels
+#pragma omp parallel for
 	for (int x = 0; x < sizeX; ++x)
 	{
 		// std::cout << "Carving X:" << x << std::endl;
