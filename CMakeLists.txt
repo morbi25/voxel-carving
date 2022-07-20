@@ -41,7 +41,7 @@ endif()
 
 # set(CMAKE_CXX_FLAGS "-Wall -Wextra")
 # set(CMAKE_CXX_FLAGS_DEBUG "-g")
-# set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native -fopenmp") no need for now
+# set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native -fopenmp")
 
 if(WIN32 OR MACOS)
 # Open3D

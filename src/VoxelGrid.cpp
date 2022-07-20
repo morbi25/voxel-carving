@@ -191,10 +191,11 @@ void VoxelGrid::carve(std::vector<cv::Mat> images, std::vector<cv::Matx44d> pose
 {
 	int numImages = images.size();
 
-	// Looping over voxels
+// Looping over voxels
 #pragma omp parallel for
 	for (int x = 0; x < sizeX; ++x)
 	{
+#pragma omp parallel for // benchmark again
 		// std::cout << "Carving X:" << x << std::endl;
 		for (int y = 0; y < sizeY; ++y)
 		{

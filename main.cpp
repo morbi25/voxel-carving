@@ -74,6 +74,19 @@ int main(int argc, char **argv)
     for (int i = 0; i < images.size(); i++)
     {
         cv::Mat image1C = images[i];
+        for (int j = 0; j < image1C.rows; j++)
+        {
+            for (int k = 0; k < image1C.cols; k++)
+            {
+                cv::Vec3b pixel = image1C.at<cv::Vec3b>(j, k);
+                double BRTreshold = pixel.val[1] * 1.3;
+                if (pixel.val[1] < 40 || (double)pixel.val[0] + (double)pixel.val[2] > BRTreshold)
+                {
+                    image1C.at<cv::Vec3b>(j, k) = cv::Vec3b(0, 0, 0);
+                }
+            }
+        }
+
         cv::Mat image1(1000, 750, CV_8UC1);
         cv::cvtColor(image1C, image1, cv::COLOR_BGR2GRAY);
         results.push_back(image1);

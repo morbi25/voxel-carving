@@ -6,7 +6,7 @@
 #include "PoseEstimator.hpp"
 
 // Configurations
-#define DO_FOREGROUND_SEGMENTATION
+// #define DO_FOREGROUND_SEGMENTATION
 #define RESIZE_IMAGES
 
 class ImagePreprocessor
