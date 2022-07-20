@@ -3,6 +3,7 @@
 #include <opencv2/opencv.hpp>
 #include <iostream>
 #include <filesystem>
+#include <omp.h>
 
 #include "../inc/ImagePreprocessor.hpp"
 
@@ -97,9 +98,15 @@ void ImagePreprocessor::readImagesAndComputeCameraPoses(std::vector<std::filesys
         rect.second.height *= 0.125;
     }
 #endif
+    // Initialize auto vector
+    std::vector<std::filesystem::directory_entry> dirEntries;
+    for (auto &entry : dirIterator)
+    {
+        dirEntries.push_back(entry);
+    }
 
     // Iterate over all images in the sequence
-    for (const auto &dirEntry : std::filesystem::recursive_directory_iterator(inDir))
+    for (i = 0; i < dirEntries.size(); i++)
     {
 #ifdef DO_FOREGROUND_SEGMENTATION
         // Check if masks and rects are valid
@@ -109,13 +116,16 @@ void ImagePreprocessor::readImagesAndComputeCameraPoses(std::vector<std::filesys
         }
 #endif
         // Get filesystem path
-        auto filepath = dirEntry.path();
+        auto filepath = dirEntries[i].path();
 
         // Read image
         image = cv::imread(filepath.string());
 
         // Estimate marker poses
-        mPoseEstimator.estimateMarkerPoses(ids, corners, rVec, tVec, image);
+        if (!mPoseEstimator.estimateMarkerPoses(ids, corners, rVec, tVec, image))
+        {
+            continue;
+        }
 
         // Draw ArUco markers and axis on image
         if (drawMarkersAndAxisOnImage)
