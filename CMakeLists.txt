@@ -13,14 +13,6 @@ set(PROJECT_SOURCE_DIR "${PROJECT_SOURCE_DIR}/src")
 # set (OpenCV_DIR /home/cmake/opencv/compiled CACHE PATH "Path to installed OpenCV")
 find_package( OpenCV REQUIRED )
 find_package( OpenMP REQUIRED ) # disable if you don't want OpenMP support
-
-set(OPEN3D_EXISTS TRUE)
-if (OPEN3D_EXISTS)
-    # https://github.com/isl-org/Open3D/releases/download/v0.15.1/open3d-devel-linux-x86_64-cxx11-abi-0.15.1.tar.xz
-    set(Open3D_DIR ${CMAKE_CURRENT_BINARY_DIR}/open3d/lib/cmake/Open3D CACHE PATH "Path to installed o3d")
-    find_package( Open3D REQUIRED )
-endif ()
-
 find_package( Eigen3 REQUIRED )
 include_directories( ${OpenCV_INCLUDE_DIRS} )
 
@@ -34,65 +26,40 @@ FetchContent_Declare(
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
+# Open3D
+include(FetchContent)
+if (APPLE)
+FetchContent_Declare(
+  open3d
+  URL https://github.com/isl-org/Open3D/releases/download/v0.15.1/open3d-devel-darwin-x86_64-0.15.1.tar.xz
+)
+endif()
+if (LINUX)
+FetchContent_Declare(
+  open3d
+  URL https://github.com/isl-org/Open3D/releases/download/v0.15.1/open3d-devel-linux-x86_64-cxx11-abi-0.15.1.tar.xz
+)
+endif()
+if (WIN32)
+FetchContent_Declare(
+  open3d
+  URL https://github.com/isl-org/Open3D/releases/download/v0.15.1/open3d-devel-windows-amd64-0.15.1.zip
+)
+endif()
+FetchContent_MakeAvailable(open3d)
+set(Open3D_DIR ${CMAKE_CURRENT_BINARY_DIR}/_deps/open3d-src/lib/cmake/Open3D CACHE PATH "Path to installed o3d")
+find_package( Open3D REQUIRED )
+
 if(NOT CMAKE_BUILD_TYPE)
     message(STATUS "No CMAKE_BUILD_TYPE specified, default to Release.")
     set(CMAKE_BUILD_TYPE "Release")
 endif()
 
+# Set C++ flags
+set(CMAKE_CXX_STANDARD 17)
 # set(CMAKE_CXX_FLAGS "-Wall -Wextra")
 # set(CMAKE_CXX_FLAGS_DEBUG "-g")
 # set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native -fopenmp")
-
-if(WIN32 OR MACOS)
-# Open3D
-option(GLIBCXX_USE_CXX11_ABI   "Set -D_GLIBCXX_USE_CXX11_ABI=1"       OFF)
-option(STATIC_WINDOWS_RUNTIME  "Use static (MT/MTd) Windows runtime"  ON )
-
-if(STATIC_WINDOWS_RUNTIME)
-    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-else()
-    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
-endif()
-
-
-if (NOT OPEN3D_EXISTS)
-    include(ExternalProject)
-    ExternalProject_Add(
-        external_open3d
-        PREFIX open3d
-        GIT_REPOSITORY https://github.com/intel-isl/Open3D.git
-        GIT_TAG master
-        GIT_SHALLOW ON
-        UPDATE_COMMAND ""
-        # Check out https://github.com/intel-isl/Open3D/blob/master/CMakeLists.txt
-        # For the full list of available options.
-        CMAKE_ARGS
-            -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
-            -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-            -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
-            -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-            -DGLIBCXX_USE_CXX11_ABI=${GLIBCXX_USE_CXX11_ABI}
-            -DSTATIC_WINDOWS_RUNTIME=${STATIC_WINDOWS_RUNTIME}
-            -DBUILD_SHARED_LIBS=ON
-            -DBUILD_PYTHON_MODULE=OFF
-            -DBUILD_EXAMPLES=OFF
-    )
-
-    # Simulate importing Open3D::Open3D
-    ExternalProject_Get_Property(external_open3d INSTALL_DIR)
-    add_library(Open3DHelper INTERFACE)
-    add_dependencies(Open3DHelper external_open3d)
-    target_compile_features(Open3DHelper INTERFACE cxx_std_14)
-    target_compile_definitions(Open3DHelper INTERFACE _GLIBCXX_USE_CXX11_ABI=$<BOOL:${GLIBCXX_USE_CXX11_ABI}>)
-    target_include_directories(Open3DHelper INTERFACE "${INSTALL_DIR}/include" "${INSTALL_DIR}/include/open3d/3rdparty")
-    target_link_directories(Open3DHelper INTERFACE "${INSTALL_DIR}/lib")
-    target_link_libraries(Open3DHelper INTERFACE Open3D)
-    add_library(Open3D::Open3D ALIAS Open3DHelper)
-endif()
-endif()
-
-# Set C++ flags
-set(CMAKE_CXX_STANDARD 17)
 
 add_definitions("-D_DISABLE_EXTENDED_ALIGNED_STORAGE")
 
@@ -136,7 +103,7 @@ if(WIN32)
         message(STATUS "Copying Open3D.dll to ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>")
         add_custom_command(TARGET voxel_carving POST_BUILD
                         COMMAND ${CMAKE_COMMAND} -E copy
-                                ${CMAKE_INSTALL_PREFIX}/bin/Open3D.dll
+                                ${CMAKE_CURRENT_BINARY_DIR}/_deps/open3d-src/bin/Open3D.dll
                                 ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
     endif()
 

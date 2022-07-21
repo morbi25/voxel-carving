@@ -101,8 +101,8 @@ int main(int argc, char **argv)
     //     cv::waitKey(0);
     // }
 
-    voxelGrid.toPLY();
-    // voxelGrid.render();
+    // voxelGrid.toPLY();
+    voxelGrid.render();
 
     return 0;
 }
