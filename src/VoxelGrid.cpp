@@ -1,9 +1,11 @@
 #include <fstream>
 #include <iostream>
 
+#include "../inc/ImagePreprocessor.hpp"
 #include "../inc/VoxelGrid.h"
 #include "../inc/Eigen.h"
 #include <omp.h>
+
 VoxelGrid::VoxelGrid(int sizeX_, int sizeY_, int sizeZ_, double startX_, double startY_, double startZ_, double step_)
 {
 	// Dimensions of the voxel grid -- Decides number of voxels we have in the voxel grid
@@ -50,25 +52,6 @@ void VoxelGrid::setElement(int x, int y, int z, uint8_t val)
 	if (x < sizeX && y < sizeY && z < sizeZ)
 	{
 		grid[z][x][y] = (val == 0) ? 0 : 1;
-	}
-}
-
-void VoxelGrid::carveSingleImg(cv::Mat img)
-{
-	cv::Mat resizedImg;
-	resize(img, resizedImg, cv::Size(sizeX, sizeY));
-	cv::Mat grayImg(sizeX, sizeY, CV_8UC1);
-	cvtColor(resizedImg, grayImg, cv::COLOR_BGR2GRAY);
-
-	for (int z = 0; z < sizeZ; ++z)
-	{
-		for (int x = 0; x < sizeX; ++x)
-		{
-			for (int y = 0; y < sizeY; ++y)
-			{
-				grid[z][x][y] = (grayImg.at<uint8_t>(x, y) == 0) ? 0 : 1;
-			}
-		}
 	}
 }
 
@@ -181,15 +164,10 @@ cv::Point2i VoxelGrid::projectVoxel(int x, int y, int z, cv::Matx44d pose, doubl
 	return pointPixel;
 }
 
-void VoxelGrid::carve(std::vector<cv::Mat> images, std::vector<cv::Matx44d> poses,
-
-#ifdef DO_GRID_VISUALIZATION
-					  std::vector<cv::Mat> results,
-#endif
-					  double imgScale, float voteThreshold)
+void VoxelGrid::carve(std::vector<ImageMeta> imageMetas, double imgScale, float voteThreshold)
 
 {
-	int numImages = images.size();
+	int numImages = imageMetas.size();
 
 // Looping over voxels
 #pragma omp parallel for
@@ -207,10 +185,10 @@ void VoxelGrid::carve(std::vector<cv::Mat> images, std::vector<cv::Matx44d> pose
 				for (int i = 0; i < numImages; ++i)
 				{
 					// One projection matrix from world to screen coordinates per image
-					cv::Matx44d pose = poses[i];
+					cv::Matx44d pose = imageMetas[i].cameraPose;
 
 					// Input images need to be grayscale CV_8UC1
-					cv::Mat image = images[i];
+					cv::Mat image = imageMetas[i].foregroundImage;
 
 					// Project voxel onto image
 					cv::Point2i projectedV = projectVoxel(x, y, z, pose, imgScale);
@@ -219,29 +197,29 @@ void VoxelGrid::carve(std::vector<cv::Mat> images, std::vector<cv::Matx44d> pose
 					{
 #ifdef DO_GRID_VISUALIZATION
 						// Draw START CORNER (yellow), X (red), Y (green), Z (blue) axis of the grid
-
+						cv::Mat results = imageMetas[i].image;
 						if (x == 0 && y == 0 && z == 0) // START CORNER
 						{
-							circle(results[i], projectedV, 7, cv::Scalar(51, 255, 255), -1);
+							circle(results, projectedV, 7, cv::Scalar(51, 255, 255), -1);
 						}
 						else if (y == 0 && z == 0) // X
 						{
-							circle(results[i], projectedV, 3, cv::Scalar(0, 0, 255), -1);
+							circle(results, projectedV, 3, cv::Scalar(0, 0, 255), -1);
 						}
 						else if (x == 0 && z == 0) // Y
 						{
-							circle(results[i], projectedV, 3, cv::Scalar(0, 255, 0), -1);
+							circle(results, projectedV, 3, cv::Scalar(0, 255, 0), -1);
 						}
 						else if (x == 0 && y == 0) // Z
 						{
-							circle(results[i], projectedV, 3, cv::Scalar(255, 0, 0), -1);
+							circle(results, projectedV, 3, cv::Scalar(255, 0, 0), -1);
 						}
 
 						// Draw voxels in the grid that project to foregroud (purple) (Dont hide axis)
-						cv::Vec3b prevPixel = results[i].at<cv::Vec3b>(projectedV.y, projectedV.x);
+						cv::Vec3b prevPixel = results.at<cv::Vec3b>(projectedV.y, projectedV.x);
 						if (!(prevPixel.val[0] == 0 && prevPixel.val[1] == 0 && prevPixel.val[2] == 255) && !(prevPixel.val[0] == 0 && prevPixel.val[1] == 255 && prevPixel.val[2] == 0) && !(prevPixel.val[0] == 255 && prevPixel.val[1] == 0 && prevPixel.val[2] == 0))
 						{
-							circle(results[i], projectedV, 0, cv::Scalar(255, 0, 255), -1);
+							circle(results, projectedV, 0, cv::Scalar(255, 0, 255), -1);
 						}
 
 #endif
@@ -252,7 +230,7 @@ void VoxelGrid::carve(std::vector<cv::Mat> images, std::vector<cv::Matx44d> pose
 							// Draw voxels in the grid that project to backgroud (gray) (Dont hide axis)
 							if (!(prevPixel.val[0] == 0 && prevPixel.val[1] == 0 && prevPixel.val[2] == 255) && !(prevPixel.val[0] == 0 && prevPixel.val[1] == 255 && prevPixel.val[2] == 0) && !(prevPixel.val[0] == 255 && prevPixel.val[1] == 0 && prevPixel.val[2] == 0))
 							{
-								circle(results[i], projectedV, 0, cv::Scalar(128, 128, 128), -1);
+								circle(results, projectedV, 0, cv::Scalar(128, 128, 128), -1);
 							}
 #endif
 							++vote;
