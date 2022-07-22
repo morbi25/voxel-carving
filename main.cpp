@@ -1,7 +1,7 @@
 #include <opencv2/opencv.hpp>
 
 #include "inc/ImagePreprocessor.hpp"
-#include "inc/VoxelGrid.h"
+#include "inc/VoxelGrid.hpp"
 
 int main(int argc, char **argv)
 {

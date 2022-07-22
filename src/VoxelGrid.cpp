@@ -2,7 +2,7 @@
 #include <iostream>
 
 #include "../inc/ImagePreprocessor.hpp"
-#include "../inc/VoxelGrid.h"
+#include "../inc/VoxelGrid.hpp"
 #include "../inc/Eigen.h"
 #include <omp.h>
 
