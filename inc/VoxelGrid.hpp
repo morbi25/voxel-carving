@@ -82,7 +82,24 @@ public:
 	 */
 	void setElement(int x, int y, int z, uint8_t val);
 
+	/**
+	 * @brief Get grid element color
+	 *
+	 * @param x coordinate
+	 * @param y coordinate
+	 * @param z coordinate
+	 * @return RGB color value of the voxel grid element
+	 */
 	cv::Vec3b getElementColor(int x, int y, int z);
+
+	/**
+	 * @brief Get grid element color
+	 *
+	 * @param x coordinate
+	 * @param y coordinate
+	 * @param z coordinate
+	 * @param rgbColor RGB color value to which the voxel grid element color should be set
+	 */
 	void setElementColor(int x, int y, int z, cv::Vec3b rgbColor);
 
 	/**

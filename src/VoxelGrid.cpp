@@ -88,8 +88,6 @@ void VoxelGrid::toPLY()
 		}
 	}
 
-	// std::cout << "EXPORT STARTING, NUMBER OF VOXELS:" << count << endl;
-
 	myfile << "ply" << std::endl;
 	myfile << "format ascii 1.0" << std::endl;
 	myfile << "comment Created by Open3D" << std::endl;
@@ -113,7 +111,6 @@ void VoxelGrid::toPLY()
 
 	for (int z = 0; z < sizeZ; ++z)
 	{
-		// std::cout << "Exporting Z:" << z << endl;
 		for (int x = 0; x < sizeX; ++x)
 		{
 			for (int y = 0; y < sizeY; ++y)
@@ -144,7 +141,7 @@ cv::Point3d VoxelGrid::voxelToWorld(int x, int y, int z)
 	cv::Point3d point;
 	point.x = startX + double(step * x);
 	point.y = startY + double(step * y);
-	point.z = startZ + double(step * z);
+	point.z = startZ - double(step * z);
 
 	return point;
 }
@@ -190,8 +187,7 @@ void VoxelGrid::carve(std::vector<ImageMeta> imageMetas, double imgScale, float 
 #pragma omp parallel for
 	for (int x = 0; x < sizeX; ++x)
 	{
-#pragma omp parallel for // benchmark again
-		// std::cout << "Carving X:" << x << std::endl;
+#pragma omp parallel for
 		for (int y = 0; y < sizeY; ++y)
 		{
 			for (int z = 0; z < sizeZ; ++z)
@@ -205,7 +201,7 @@ void VoxelGrid::carve(std::vector<ImageMeta> imageMetas, double imgScale, float 
 					// One projection matrix from world to screen coordinates per image
 					cv::Matx44d pose = imageMetas[i].cameraPose;
 
-					// Input images need to be grayscale CV_8UC1
+					// Color image with black background and color foreground
 					cv::Mat image = imageMetas[i].foregroundImage;
 
 					// Project voxel onto image
@@ -241,8 +237,10 @@ void VoxelGrid::carve(std::vector<ImageMeta> imageMetas, double imgScale, float 
 						}
 
 #endif
-						// Vote to carve the voxel if projects to background pixel
+						// Get BGR pixel corresponding to projected voxel in the image
 						cv::Vec3b imagePixel = image.at<cv::Vec3b>(projectedV.y, projectedV.x);
+
+						// Vote to carve the voxel if projects to black/background pixel (0, 0, 0)
 						if (imagePixel.val[0] == 0 && imagePixel.val[1] == 0 && imagePixel.val[2] == 0)
 						{
 #ifdef DO_GRID_VISUALIZATION
@@ -254,6 +252,7 @@ void VoxelGrid::carve(std::vector<ImageMeta> imageMetas, double imgScale, float 
 #endif
 							++vote;
 						}
+						// Don't vote to carve the voxel and propose the color to be set if projects to foreground pixel
 						else
 						{
 							voxelColorProposals.push_back(imagePixel);
@@ -265,13 +264,17 @@ void VoxelGrid::carve(std::vector<ImageMeta> imageMetas, double imgScale, float 
 				{
 					setElement(x, y, z, 0);
 				}
+				// If not enough votes to carve the voxel
 				else
 				{
 					int sumR = 0;
 					int sumG = 0;
 					int sumB = 0;
 					int numProposals = voxelColorProposals.size();
+
+					// If there are out of scope regions of grid that are not covere by image dataset. (Consider using smaller grid or more images)
 					if (numProposals == 0) numProposals = 1;
+
 					for (cv::Vec3b colorProp : voxelColorProposals)
 					{
 						sumR += colorProp.val[0];
@@ -279,6 +282,7 @@ void VoxelGrid::carve(std::vector<ImageMeta> imageMetas, double imgScale, float 
 						sumB += colorProp.val[2];
 					}
 
+					// Set voxel color to the average of proposed color values from different images
 					setElementColor(x, y, z, cv::Vec3b(sumR / numProposals, sumG / numProposals, sumB / numProposals));
 				}
 			}
