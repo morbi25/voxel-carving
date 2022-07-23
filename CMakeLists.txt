@@ -65,16 +65,18 @@ add_definitions("-D_DISABLE_EXTENDED_ALIGNED_STORAGE")
 
 set(HEADER_FILES 
     inc/Eigen.h
-    inc/VoxelGrid.h
+    inc/VoxelGrid.hpp
     inc/ImagePreprocessor.hpp
     inc/PoseEstimator.hpp
+    inc/ForegroundSegmenter.hpp
 )
 
 set(SOURCE_FILES 
     src/VoxelGrid.cpp
-    src/calib_intrinsic.cpp
+    src/CalibrationIntrinsics.cpp
     src/PoseEstimator.cpp
     src/ImagePreprocessor.cpp
+    src/ForegroundSegmenter.cpp
 )
 
 link_directories(${FreeImage_LIBRARY_DIR})
