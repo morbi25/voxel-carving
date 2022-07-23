@@ -34,7 +34,7 @@ FetchContent_Declare(
   URL https://github.com/isl-org/Open3D/releases/download/v0.15.1/open3d-devel-darwin-x86_64-0.15.1.tar.xz
 )
 endif()
-if (LINUX)
+if (UNIX)
 FetchContent_Declare(
   open3d
   URL https://github.com/isl-org/Open3D/releases/download/v0.15.1/open3d-devel-linux-x86_64-cxx11-abi-0.15.1.tar.xz
