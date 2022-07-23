@@ -60,15 +60,15 @@ std::vector<ImageMeta> ImagePreprocessor::readImagesAndComputeCameraPoses(const 
         cv::Mat foregroundImageRGB = mForegroundSegmenter.doForegroundSegmentation(imageMeta.image);
 
         // Convert foreground image to greyscale
-        cv::Mat foregroundImage(1000, 750, CV_8UC1);
-        cv::cvtColor(foregroundImageRGB, foregroundImage, cv::COLOR_BGR2GRAY);
-        imageMeta.foregroundImage = foregroundImage;
+        //cv::Mat foregroundImage(1000, 750, CV_8UC1);
+        //cv::cvtColor(foregroundImageRGB, foregroundImage, cv::COLOR_BGR2GRAY);
+        imageMeta.foregroundImage = foregroundImageRGB;
 
         // Store all relevant data
         imageMetas.push_back(imageMeta);
 
         // Clear all temporary data structures and increment i
-        foregroundImage.release();
+        foregroundImageRGB.release();
         ids.clear();
         corners.clear();
         rVec.release();

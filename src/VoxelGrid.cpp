@@ -22,16 +22,21 @@ VoxelGrid::VoxelGrid(int sizeX_, int sizeY_, int sizeZ_, double startX_, double 
 	step = step_;
 
 	grid = new uint8_t **[sizeZ];
+	colorGrid = new cv::Vec3b * *[sizeZ];
 
 	for (int z = 0; z < sizeZ; ++z)
 	{
 		grid[z] = new uint8_t *[sizeX];
+		colorGrid[z] = new cv::Vec3b * [sizeX];
 		for (int x = 0; x < sizeX; ++x)
 		{
 			grid[z][x] = new uint8_t[sizeY];
+			colorGrid[z][x] = new cv::Vec3b[sizeY];
+
 			for (int y = 0; y < sizeY; ++y)
 			{
 				grid[z][x][y] = 1;
+				colorGrid[z][x][y] = cv::Vec3b(0, 0, 0);
 			}
 		}
 	}
@@ -40,6 +45,7 @@ VoxelGrid::VoxelGrid(int sizeX_, int sizeY_, int sizeZ_, double startX_, double 
 VoxelGrid::~VoxelGrid()
 {
 	delete grid;
+	delete colorGrid;
 };
 
 int VoxelGrid::getElement(int x, int y, int z)
@@ -53,6 +59,16 @@ void VoxelGrid::setElement(int x, int y, int z, uint8_t val)
 	{
 		grid[z][x][y] = (val == 0) ? 0 : 1;
 	}
+}
+
+cv::Vec3b VoxelGrid::getElementColor(int x, int y, int z)
+{
+	return colorGrid[z][x][y];
+}
+
+void VoxelGrid::setElementColor(int x, int y, int z, cv::Vec3b rgbColor)
+{
+	colorGrid[z][x][y] = rgbColor;
 }
 
 void VoxelGrid::toPLY()
@@ -104,7 +120,8 @@ void VoxelGrid::toPLY()
 			{
 				if (grid[z][x][y] == 1)
 				{
-					myfile << x << " " << y << " " << z << " " << 0 << " " << 255 << " " << 0 << std::endl;
+					cv::Vec3b voxelColor = getElementColor(x, y, z);
+					myfile << x << " " << y << " " << z << " " << (int)voxelColor.val[0] << " " << (int)voxelColor.val[1] << " " << (int)voxelColor.val[2] << std::endl;
 				}
 			}
 		}
@@ -180,6 +197,7 @@ void VoxelGrid::carve(std::vector<ImageMeta> imageMetas, double imgScale, float 
 			for (int z = 0; z < sizeZ; ++z)
 			{
 				int vote = 0;
+				std::vector<cv::Vec3b> voxelColorProposals;
 
 				// Looping over images
 				for (int i = 0; i < numImages; ++i)
@@ -224,7 +242,8 @@ void VoxelGrid::carve(std::vector<ImageMeta> imageMetas, double imgScale, float 
 
 #endif
 						// Vote to carve the voxel if projects to background pixel
-						if (image.at<uint8_t>(projectedV.y, projectedV.x) == 0)
+						cv::Vec3b imagePixel = image.at<cv::Vec3b>(projectedV.y, projectedV.x);
+						if (imagePixel.val[0] == 0 && imagePixel.val[1] == 0 && imagePixel.val[2] == 0)
 						{
 #ifdef DO_GRID_VISUALIZATION
 							// Draw voxels in the grid that project to backgroud (gray) (Dont hide axis)
@@ -235,12 +254,32 @@ void VoxelGrid::carve(std::vector<ImageMeta> imageMetas, double imgScale, float 
 #endif
 							++vote;
 						}
+						else
+						{
+							voxelColorProposals.push_back(imagePixel);
+						}
 					}
 				}
 				// If enough votes to carve the voxel (1.0 = all votes needed)
 				if (vote >= voteThreshold * numImages)
 				{
 					setElement(x, y, z, 0);
+				}
+				else
+				{
+					int sumR = 0;
+					int sumG = 0;
+					int sumB = 0;
+					int numProposals = voxelColorProposals.size();
+					if (numProposals == 0) numProposals = 1;
+					for (cv::Vec3b colorProp : voxelColorProposals)
+					{
+						sumR += colorProp.val[0];
+						sumG += colorProp.val[1];
+						sumB += colorProp.val[2];
+					}
+
+					setElementColor(x, y, z, cv::Vec3b(sumR / numProposals, sumG / numProposals, sumB / numProposals));
 				}
 			}
 		}

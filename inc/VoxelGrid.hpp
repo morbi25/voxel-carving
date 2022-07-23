@@ -4,11 +4,12 @@
 #include <opencv2/opencv.hpp>
 #include "open3d/Open3D.h"
 
-#define DO_GRID_VISUALIZATION
+//#define DO_GRID_VISUALIZATION
 
 class VoxelGrid
 {
 	uint8_t ***grid;
+	cv::Vec3b ***colorGrid;
 
 	/**
 	 * @brief Convert voxel grid to ply file
@@ -80,6 +81,9 @@ public:
 	 * @param val Value to which the voxel grid element should be set
 	 */
 	void setElement(int x, int y, int z, uint8_t val);
+
+	cv::Vec3b getElementColor(int x, int y, int z);
+	void setElementColor(int x, int y, int z, cv::Vec3b rgbColor);
 
 	/**
 	 * @brief Render the voxel grid with Open3D
