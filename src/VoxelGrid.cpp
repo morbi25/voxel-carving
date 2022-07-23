@@ -141,7 +141,7 @@ cv::Point3d VoxelGrid::voxelToWorld(int x, int y, int z)
 	cv::Point3d point;
 	point.x = startX + double(step * x);
 	point.y = startY + double(step * y);
-	point.z = startZ - double(step * z);
+	point.z = startZ + double(step * z);
 
 	return point;
 }
@@ -277,9 +277,9 @@ void VoxelGrid::carve(std::vector<ImageMeta> imageMetas, double imgScale, float 
 
 					for (cv::Vec3b colorProp : voxelColorProposals)
 					{
-						sumR += colorProp.val[0];
+						sumR += colorProp.val[2];
 						sumG += colorProp.val[1];
-						sumB += colorProp.val[2];
+						sumB += colorProp.val[0];
 					}
 
 					// Set voxel color to the average of proposed color values from different images
