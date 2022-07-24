@@ -9,7 +9,7 @@ int main(int argc, char **argv)
     VoxelGrid voxelGrid(400, 400, 150, 0, 0, 0, 0.0007);
 
     // Input directory for the voxel carving algorithm
-    std::string inDir = "../resources/green_teapot_v2/";
+    std::string inDir = "../resources/green_bunny_v2/";
 
     /*std::unordered_map<std::string, cv::Rect> imageNameToRect{
         {"20220713_205043.jpg", cv::Rect(0, 0, 7990, 5990)},
@@ -45,7 +45,7 @@ int main(int argc, char **argv)
     
     // Define pose estimator and a specific foreground segmenter
     PoseEstimator poseEstimator(cameraMatrix, distCoeffs);
-    ColorThreshold foregroundSegmenter;
+    U2Net foregroundSegmenter;
 
     // Define image preprocessor with pre-defined pose estimator and foreground segmenter
     ImagePreprocessor imagePreprocessor(poseEstimator, foregroundSegmenter);

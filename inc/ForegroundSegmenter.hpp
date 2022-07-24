@@ -2,7 +2,9 @@
 
 #include <opencv2/core/mat.hpp>
 #include <opencv2/imgproc.hpp>
-
+#include <opencv2/dnn.hpp>
+#include <opencv2/opencv.hpp>
+#include <opencv2/alphamat.hpp>
 /// Class of an abstract ForegroundSegmenter
 class ForegroundSegmenter
 {
@@ -59,4 +61,16 @@ public:
     cv::Mat doForegroundSegmentation(const cv::Mat &image) override;
 };
 
-// ToDo: Create an additional class to use Unet for foreground segmentation
+
+/// Class of a ForegroundSegmenter that uses U2Net
+class U2Net : public ForegroundSegmenter
+{
+public:
+     /**
+     * @brief Perform foreground segmentation using U2Net
+     *
+     * @param image Image for which the foreground should be extracted
+     * @return Foreground image
+     */
+    cv::Mat doForegroundSegmentation(const cv::Mat& image) override;
+};

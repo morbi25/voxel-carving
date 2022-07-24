@@ -57,3 +57,145 @@ cv::Mat ColorThreshold::doForegroundSegmentation(const cv::Mat &image)
     }
     return image;
 }
+
+cv::Mat U2Net::doForegroundSegmentation(const cv::Mat& image)
+{
+    int background_threshold = 10;
+    int foreground_trehshold = 240;
+    cv::Mat small_image;
+    double min, max;
+    cv::Mat foregroundImage = image;
+    //load network
+    auto network = cv::dnn::readNetFromONNX("../resources/u2net.onnx");
+    //set Backend and perform prediction on CPU
+    network.setPreferableBackend(cv::dnn::DNN_BACKEND_OPENCV);
+    network.setPreferableTarget(cv::dnn::DNN_TARGET_CPU);
+    
+    //all predictions are performed on a image of size 320 x 320, the mask will later be upsampled
+    cv::resize(image, small_image, cv::Size(320, 320), cv::InterpolationFlags::INTER_LANCZOS4);
+    
+    //u2net expect float values as input
+    small_image.convertTo(small_image, CV_32F);
+    
+    //normalization of values acc to U2Net training spec
+    cv::minMaxLoc(small_image, &min, &max);
+    for (int j = 0; j < small_image.rows; j++)
+    {
+        for (int k = 0; k < small_image.cols; k++)
+        {
+            cv::Vec3f &pixel = small_image.at<cv::Vec3f>(j, k);
+            pixel.val[0] = (pixel.val[0]  / max - 0.485) / 0.229;
+            pixel.val[1] = (pixel.val[1] / max - 0.456) / 0.224;
+            pixel.val[2] = (pixel.val[2] / max - 0.406) / 0.225;
+          
+        }
+    }
+
+    std::vector< std::vector< cv::Mat > > outBlobs;
+    //get all outputs of the u2net, the names are read out of the onnx file. Netron can be used for this.
+    std::vector< cv::String > outBlobNames = { "1959", "1960","1961" ,"1962" ,"1963" ,"1964" ,"1965" };
+    
+    //define the downsampled image as input 
+    network.setInput(cv::dnn::blobFromImage(small_image));
+
+    
+    //perform inference
+    network.forward(outBlobs, outBlobNames);
+    
+    //combine the 7 output images into one grayscale image
+    for (int i = 0; i < 6; i++)
+    {
+        int x = (outBlobs[i][0]).size[2];
+        int y = (outBlobs[i][0]).size[2];
+
+        cv::Size size(x, y);
+        outBlobs[i][0] = cv::Mat(size, CV_32F, (outBlobs[i][0]).ptr(0, 0));
+        resize(outBlobs[i][0], outBlobs[i][0], image.size(), cv::InterpolationFlags::INTER_LANCZOS4);
+    }
+    
+    cv::Mat combinedOutput = (cv::Mat)outBlobs[0][0];
+
+    for (int i = 0 + 1; i < 6; i++)
+    {
+        cv::add(combinedOutput, outBlobs[i][0], combinedOutput);
+    }
+    cv::normalize(combinedOutput, combinedOutput, 0, 255, cv::NORM_MINMAX);
+    
+
+
+    //generate trimap from the grayscale output
+    cv::Mat trimap = combinedOutput;
+
+    for (int j = 0; j < trimap.rows; j++)
+    {
+        for (int k = 0; k < trimap.cols; k++)
+        {
+            if (trimap.at<float>(j, k) >foreground_trehshold)
+            {
+                trimap.at<float>(j, k) = 255;
+            }
+            else if (trimap.at<float>(j, k) < background_threshold)
+            {
+                trimap.at<float>(j, k) = 0;
+            }
+            else
+            {
+                trimap.at<float>(j, k) = 128;
+            }
+
+
+
+        }
+    }
+    trimap.convertTo(trimap, CV_8U);
+
+    cv::Mat alphamat_out;
+    cv::Mat output_Image = image;
+
+    //use alphamat together with the trimap to generate mask
+    cv::alphamat::infoFlow(image, trimap, alphamat_out);
+    
+    //apply mask
+    for (int j = 0; j < alphamat_out.rows; j++)
+    {
+        for (int k = 0; k < alphamat_out.cols; k++)
+        {
+            int value = alphamat_out.at<uchar>(j, k);
+            if (value < 210)
+            {
+                output_Image.at<cv::Vec3b>(j, k) = cv::Vec3b(0, 0, 0);
+            }
+
+
+        }
+    }
+       
+    return output_Image;
+    /*
+    auto result = network.forward("1959");
+    cv::Size siz(result.size[2], result.size[3]);
+    cv::Mat a = cv::Mat(siz, CV_32F, result.ptr(0, 0));
+    resize(a, a, image.size(), cv::InterpolationFlags::INTER_LANCZOS4);
+    cv::normalize(a,a, 0, 255, cv::NORM_MINMAX);
+    cv::minMaxLoc(a, &min, &max);
+    for (int j = 0; j < a.rows; j++)
+    {
+        for (int k = 0; k < a.cols; k++)
+        {
+            if (a.at<float>(j, k) <= 230)
+            {
+                foregroundImage.at<cv::Vec3b>(j,k) = cv::Vec3b(0, 0, 0);
+
+            }
+
+        }
+    }
+
+
+    cv::imshow("mask", a);
+    cv::imshow("image", image);
+    cv::waitKey();
+    return image;
+    */
+}
+
