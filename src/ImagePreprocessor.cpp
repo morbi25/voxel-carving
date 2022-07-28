@@ -74,7 +74,7 @@ std::vector<ImageMeta> ImagePreprocessor::readImagesAndComputeCameraPoses(const 
     return imageMetas;
 }
 
-void verbose(std::vector<ImageMeta> imageMetas, std::string outDir, bool writeImage, bool writeForegroundImage, bool printCameraPoses)
+void ImagePreprocessor::verbose(std::vector<ImageMeta> imageMetas, std::string outDir, bool writeImage, bool writeForegroundImage, bool printCameraPoses)
 {
     for (auto &imageMeta : imageMetas)
     {
