@@ -65,19 +65,19 @@ cv::Mat U2Net::doForegroundSegmentation(const cv::Mat& image)
     cv::Mat small_image;
     double min, max;
     cv::Mat foregroundImage = image;
-    //load network
+    // Load network
     auto network = cv::dnn::readNetFromONNX("../resources/u2net.onnx");
-    //set Backend and perform prediction on CPU
+    // Set Backend and perform prediction on CPU
     network.setPreferableBackend(cv::dnn::DNN_BACKEND_OPENCV);
     network.setPreferableTarget(cv::dnn::DNN_TARGET_CPU);
     
-    //all predictions are performed on a image of size 320 x 320, the mask will later be upsampled
+    // All predictions are performed on a image of size 320 x 320, the mask will later be upsampled
     cv::resize(image, small_image, cv::Size(320, 320), cv::InterpolationFlags::INTER_LANCZOS4);
     
-    //u2net expect float values as input
+    // U2net expect float values as input
     small_image.convertTo(small_image, CV_32F);
     
-    //normalization of values acc to U2Net training spec
+    // Normalization of values acc to U2Net training spec
     cv::minMaxLoc(small_image, &min, &max);
     for (int j = 0; j < small_image.rows; j++)
     {
@@ -92,17 +92,17 @@ cv::Mat U2Net::doForegroundSegmentation(const cv::Mat& image)
     }
 
     std::vector< std::vector< cv::Mat > > outBlobs;
-    //get all outputs of the u2net, the names are read out of the onnx file. Netron can be used for this.
+    // Get all outputs of the u2net, the names are read out of the onnx file. Netron can be used for this.
     std::vector< cv::String > outBlobNames = { "1959", "1960","1961" ,"1962" ,"1963" ,"1964" ,"1965" };
     
-    //define the downsampled image as input 
+    // Define the downsampled image as input 
     network.setInput(cv::dnn::blobFromImage(small_image));
 
     
-    //perform inference
+    // Perform inference
     network.forward(outBlobs, outBlobNames);
     
-    //combine the 7 output images into one grayscale image
+    // Combine the 7 output images into one grayscale image
     for (int i = 0; i < 6; i++)
     {
         int x = (outBlobs[i][0]).size[2];
@@ -123,7 +123,7 @@ cv::Mat U2Net::doForegroundSegmentation(const cv::Mat& image)
     
 
 
-    //generate trimap from the grayscale output
+    // Generate trimap from the grayscale output
     cv::Mat trimap = combinedOutput;
 
     for (int j = 0; j < trimap.rows; j++)
@@ -152,10 +152,10 @@ cv::Mat U2Net::doForegroundSegmentation(const cv::Mat& image)
     cv::Mat alphamat_out;
     cv::Mat output_Image = image;
 
-    //use alphamat together with the trimap to generate mask
+    // Use alphamat together with the trimap to generate mask
     cv::alphamat::infoFlow(image, trimap, alphamat_out);
     
-    //apply mask
+    // Apply mask
     for (int j = 0; j < alphamat_out.rows; j++)
     {
         for (int k = 0; k < alphamat_out.cols; k++)
@@ -171,31 +171,5 @@ cv::Mat U2Net::doForegroundSegmentation(const cv::Mat& image)
     }
        
     return output_Image;
-    /*
-    auto result = network.forward("1959");
-    cv::Size siz(result.size[2], result.size[3]);
-    cv::Mat a = cv::Mat(siz, CV_32F, result.ptr(0, 0));
-    resize(a, a, image.size(), cv::InterpolationFlags::INTER_LANCZOS4);
-    cv::normalize(a,a, 0, 255, cv::NORM_MINMAX);
-    cv::minMaxLoc(a, &min, &max);
-    for (int j = 0; j < a.rows; j++)
-    {
-        for (int k = 0; k < a.cols; k++)
-        {
-            if (a.at<float>(j, k) <= 230)
-            {
-                foregroundImage.at<cv::Vec3b>(j,k) = cv::Vec3b(0, 0, 0);
-
-            }
-
-        }
-    }
-
-
-    cv::imshow("mask", a);
-    cv::imshow("image", image);
-    cv::waitKey();
-    return image;
-    */
 }
 
