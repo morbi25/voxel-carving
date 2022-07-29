@@ -1,27 +1,17 @@
-#include <stdio.h>
-#include <filesystem>
 #include <opencv2/opencv.hpp>
 
-#include "inc/Eigen.h"
 #include "inc/ImagePreprocessor.hpp"
-#include "src/calib_intrinsic.cpp"
-#include "inc/VoxelGrid.h"
-#include "open3d/Open3D.h"
+#include "inc/VoxelGrid.hpp"
 
 int main(int argc, char **argv)
 {
-    // NILS's part
+    // Define a voxel grid of size 400x400x150 with step size 0.0007
     VoxelGrid voxelGrid(400, 400, 150, 0, 0, 0, 0.0007);
 
-    std::vector<std::filesystem::path> filepaths;
-    std::vector<cv::Mat> images;
-    std::vector<cv::Mat> results;
-    std::vector<cv::Matx44d> cameraPoses;
+    // Input directory for the voxel carving algorithm
+    std::string inDir = "../resources/green_bunny_v2/";
 
-    std::string inDir = "../resources/green_teapot_v2/";
-    std::string outDir = "../resources/green_teapot_v2_preprocessed/";
-
-    std::unordered_map<std::string, cv::Rect> imageNameToRect{
+    /*std::unordered_map<std::string, cv::Rect> imageNameToRect{
         {"20220713_205043.jpg", cv::Rect(0, 0, 7990, 5990)},
         {"20220713_205047.jpg", cv::Rect(0, 0, 7990, 5990)},
         {"20220713_205052.jpg", cv::Rect(0, 0, 7990, 5990)},
@@ -47,61 +37,35 @@ int main(int argc, char **argv)
         {"20220713_205249.jpg", cv::Rect(0, 0, 7990, 5990)},
         {"20220713_205255.jpg", cv::Rect(0, 0, 7990, 5990)},
         {"20220713_205301.jpg", cv::Rect(0, 0, 7990, 5990)},
-    };
+    };*/
+
+    // Define camera intrinsics and distortion coefficients estimated by the doCalibration procedure
     cv::Matx33d cameraMatrix(6005.641173008885, 0, 4030.950098307286, 0, 6002.681113514058, 2986.968236297804, 0, 0, 1);
     cv::Vec<double, 5> distCoeffs(0.08170529228771495, -0.2834249429739051, 0.0007430954776429432, 0.0006295724080059367, 0.3968821057473708);
-    ImagePreprocessor imPrep(cameraMatrix, distCoeffs);
+    
+    // Define pose estimator and a specific foreground segmenter
+    PoseEstimator poseEstimator(cameraMatrix, distCoeffs);
+    U2Net foregroundSegmenter;
 
-#ifdef DO_FOREGROUND_SEGMENTATION
-    imPrep.readImagesAndComputeCameraPoses(filepaths, images, cameraPoses, inDir, false, imageNameToRect, 2);
-#else
-    imPrep.readImagesAndComputeCameraPoses(filepaths, images, cameraPoses, inDir, true);
-#endif
+    // Define image preprocessor with pre-defined pose estimator and foreground segmenter
+    ImagePreprocessor imagePreprocessor(poseEstimator, foregroundSegmenter);
 
-    for (unsigned int i = 0; i < std::min(filepaths.size(), images.size()); i++)
+    // Get images and its meta data
+    std::vector<ImageMeta> imageMetas = imagePreprocessor.readImagesAndComputeCameraPoses(inDir);
+    
+    // Perform voxel carving
+    voxelGrid.carve(imageMetas, 0.125, 0.1);
+
+    /*for (int i = 0; i < images.size(); i++)
     {
-        std::string filename = filepaths.at(i).filename().string();
-#ifdef DO_FOREGROUND_SEGMENTATION
-        std::string extension = "_foreground.jpg";
-#else
-        std::string extension = "_markers.jpg";
-#endif
-        cv::imwrite(outDir + filename.substr(0, filename.find_last_of(".")) + extension, images[i]);
-        std::cout << cameraPoses[i] << std::endl;
-    }
-
-    // for loop over images
-    for (int i = 0; i < images.size(); i++)
-    {
-        cv::Mat image1C = images[i];
-        for (int j = 0; j < image1C.rows; j++)
-        {
-            for (int k = 0; k < image1C.cols; k++)
-            {
-                cv::Vec3b pixel = image1C.at<cv::Vec3b>(j, k);
-                double BRTreshold = pixel.val[1] * 1.3;
-                if (pixel.val[1] < 40 || (double)pixel.val[0] + (double)pixel.val[2] > BRTreshold)
-                {
-                    image1C.at<cv::Vec3b>(j, k) = cv::Vec3b(0, 0, 0);
-                }
-            }
-        }
-
-        cv::Mat image1(1000, 750, CV_8UC1);
-        cv::cvtColor(image1C, image1, cv::COLOR_BGR2GRAY);
-        results.push_back(image1);
-    }
-
-    voxelGrid.carve(results, cameraPoses, images, 0.125, 0.1);
-
-    // for (int i = 0; i < images.size(); i++)
-    // {
-    //     cv::namedWindow("Display Image", cv::WINDOW_AUTOSIZE);
-    //     cv::imshow("Display Image", images[i]);
-    //     cv::waitKey(0);
-    // }
+        cv::namedWindow("Display Image", cv::WINDOW_AUTOSIZE);
+        cv::imshow("Display Image", images[i]);
+        cv::waitKey(0);
+    }*/
 
     // voxelGrid.toPLY();
+
+    // Renfer the output voxel grid after carving in Open3D
     voxelGrid.render();
 
     return 0;

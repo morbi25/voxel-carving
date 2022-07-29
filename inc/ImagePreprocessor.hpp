@@ -1,27 +1,57 @@
 #pragma once
 
+#include <filesystem>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/imgproc.hpp>
 
 #include "PoseEstimator.hpp"
+#include "ForegroundSegmenter.hpp"
 
-// Configurations
-// #define DO_FOREGROUND_SEGMENTATION
-#define RESIZE_IMAGES
+// Struct that captures an image, its corresponding foreground image, its camera pose, and its file path
+struct ImageMeta
+{
+    cv::Mat image;
+    cv::Mat foregroundImage;
+    cv::Matx44d cameraPose;
+    std::filesystem::path filepath;
+};
 
+/// Class that pre-processes an input image dataset for voxel-carving
 class ImagePreprocessor
 {
-    PoseEstimator mPoseEstimator;
+    PoseEstimator &mPoseEstimator;
+    ForegroundSegmenter &mForegroundSegmenter;
+    bool mDoForegroundSegmentation;
+    double mScale;
 
 public:
-    ImagePreprocessor(PoseEstimator poseEstimator);
-    ImagePreprocessor(cv::Matx33d cameraMatrix, cv::Vec<double, 5> distCoeffs, cv::aruco::PREDEFINED_DICTIONARY_NAME dictType = cv::aruco::DICT_6X6_250);
-    static void extractForegroundImage(cv::Mat &foregroundImage, cv::Mat &image, const cv::Mat &mask);
-    static void doForegroundSegmentation(cv::Mat &foregroundImage, cv::Mat &mask, const cv::Mat &image, const cv::Rect &rect, const unsigned int iterCount = 1, const cv::GrabCutModes &mode = cv::GC_INIT_WITH_RECT, const bool &objectIsBlack = false);
-    void readImagesAndComputeCameraPoses(std::vector<std::filesystem::path> &filepaths, std::vector<cv::Mat> &images, std::vector<cv::Matx44d> &cameraPoses, const std::string &inDir, const bool &drawMarkersAndAxisOnImage
-#ifdef DO_FOREGROUND_SEGMENTATION
-                                         ,
-                                         std::unordered_map<std::string, cv::Rect> &imageNamesToRect, const unsigned int &iterCount = 1, const cv::GrabCutModes &mode = cv::GC_INIT_WITH_RECT, const std::vector<cv::Mat> &masks = {}
-#endif
-    );
+    /**
+     * @brief Construct a new ImagePreprocessor object accepting @p poseEstimator, @p foregroundSegmenter, @p doForegroundSegmentation, and @p scale
+     *
+     * @param poseEstimator PoseEstimator instance used to estimate the camera pose in world coordinates for each image from the dataset
+     * @param foregroundSegmenter Concrete ForgroundSegmenter instance (GrabCut, ColorThreshold, Unet)
+     * @param doForegroundSegmentation Indicates whether to perform foreground segmentation
+     * @param scale Scale factor to resize the input images
+     */
+    ImagePreprocessor(PoseEstimator &poseEstimator, ForegroundSegmenter &foregroundSegmenter, bool doForegroundSegmentation = true, double scale = 0.125);
+
+    /**
+     * @brief Read a dataset of images being all in one specified directory and compute the camera poses for each
+     *
+     * @param inDir Directory for the dataset that should be processed
+     * @param drawMarkersAndAxesOnImage Flag that specifies whether the detected markers and axes should be drawn on the images
+     * @return Vector storing all images and its meta data
+     */
+    std::vector<ImageMeta> readImagesAndComputeCameraPoses(const std::string &inDir, bool drawMarkersAndAxisOnImage = false);
+
+    /**
+     * @brief Stores and prints out verbose information (for debugging)
+     *
+     * @param imageMetas Images and its corresponding meta data
+     * @param outDir Output directory where the pre-processed images should be stored
+     * @param writeImage Flag indicating whether to store the pre-processed input image
+     * @param writeForegroundImage Flag indicating whether to store the computed foreground image
+     * @param printCameraPoses Flag indicating whether to print the calculated camera poses
+     */
+    void verbose(std::vector<ImageMeta> imageMetas, std::string outDir, bool writeImage, bool writeForegroundImage, bool printCameraPoses);
 };

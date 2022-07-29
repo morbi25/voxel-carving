@@ -1,18 +1,19 @@
-#include <iostream>
 #include <opencv2/calib3d.hpp>
+#include <iostream>
 
 #include "../inc/PoseEstimator.hpp"
+#include "../inc/ImagePreprocessor.hpp"
 
 PoseEstimator::PoseEstimator(cv::Matx33d cameraMatrix, cv::Vec<double, 5> distCoeffs, cv::aruco::PREDEFINED_DICTIONARY_NAME dictType)
     : mCameraMatrix(std::move(cameraMatrix)), mDistCoeffs(std::move(distCoeffs)), mDictionary(cv::aruco::getPredefinedDictionary(dictType))
 {
 }
 
-bool PoseEstimator::estimateMarkerPoses(std::vector<int> &ids, std::vector<std::vector<cv::Point2f>> &corners, cv::Mat &rVec, cv::Mat &tVec, const cv::Mat &image)
+bool PoseEstimator::detectMarkersAndEstimateBoardPose(std::vector<int> &ids, std::vector<std::vector<cv::Point2f>> &corners, cv::Mat &rVec, cv::Mat &tVec, ImageMeta imageMeta)
 {
     cv::Ptr<cv::aruco::GridBoard> board = cv::aruco::GridBoard::create(5, 7, 0.04, 0.01, mDictionary);
 
-    cv::aruco::detectMarkers(image, board->dictionary, corners, ids);
+    cv::aruco::detectMarkers(imageMeta.image, board->dictionary, corners, ids);
 
     // Check if one marker is detected
     if (ids.size() > 0)
@@ -22,7 +23,7 @@ bool PoseEstimator::estimateMarkerPoses(std::vector<int> &ids, std::vector<std::
     }
     else
     {
-        std::cout << ("Cannot determine camera pose since no ArUco marker was detected.") << std::endl;
+        std::cout << ("Cannot determine camera pose for image at path " + imageMeta.filepath.string() + " since no ArUco marker was detected.") << std::endl;
         return false;
     }
 }

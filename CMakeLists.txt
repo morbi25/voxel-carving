@@ -34,7 +34,7 @@ FetchContent_Declare(
   URL https://github.com/isl-org/Open3D/releases/download/v0.15.1/open3d-devel-darwin-x86_64-0.15.1.tar.xz
 )
 endif()
-if (LINUX)
+if (UNIX)
 FetchContent_Declare(
   open3d
   URL https://github.com/isl-org/Open3D/releases/download/v0.15.1/open3d-devel-linux-x86_64-cxx11-abi-0.15.1.tar.xz
@@ -65,16 +65,18 @@ add_definitions("-D_DISABLE_EXTENDED_ALIGNED_STORAGE")
 
 set(HEADER_FILES 
     inc/Eigen.h
-    inc/VoxelGrid.h
+    inc/VoxelGrid.hpp
     inc/ImagePreprocessor.hpp
     inc/PoseEstimator.hpp
+    inc/ForegroundSegmenter.hpp
 )
 
 set(SOURCE_FILES 
     src/VoxelGrid.cpp
-    src/calib_intrinsic.cpp
+    src/CalibrationIntrinsics.cpp
     src/PoseEstimator.cpp
     src/ImagePreprocessor.cpp
+    src/ForegroundSegmenter.cpp
 )
 
 link_directories(${FreeImage_LIBRARY_DIR})
