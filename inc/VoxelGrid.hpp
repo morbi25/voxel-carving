@@ -35,9 +35,10 @@ class VoxelGrid
 	 * @param z coordinate
 	 * @param pose Rigid body transformation that transforms points from the board coordinate system to the camera coordinate system
 	 * @param imgScale Image scaling factor to adapt camera intrinsics accordingly
+	 * @param zc Depth value of the voxel used in weights of coloring algorithm
 	 * @return Projected 2D pixel coordinates of the voxel
 	 */
-	cv::Point2i projectVoxel(int x, int y, int z, cv::Matx44d pose, double imgScale);
+	cv::Point2i projectVoxel(int x, int y, int z, cv::Matx44d pose, double imgScale, double& zc);
 
 public:
 	int sizeX, sizeY, sizeZ;

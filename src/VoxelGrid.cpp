@@ -131,9 +131,9 @@ void VoxelGrid::render()
 {
 	VoxelGrid::toPLY();
 	// create new VoxelGrid object
-	auto vg = std::make_shared<open3d::geometry::VoxelGrid>();
-	open3d::io::ReadVoxelGrid("voxel_grid.ply", *vg);
-	open3d::visualization::DrawGeometries({vg});
+	//auto vg = std::make_shared<open3d::geometry::VoxelGrid>();
+	//open3d::io::ReadVoxelGrid("voxel_grid.ply", *vg);
+	//open3d::visualization::DrawGeometries({vg});
 }
 
 cv::Point3d VoxelGrid::voxelToWorld(int x, int y, int z)
@@ -141,12 +141,12 @@ cv::Point3d VoxelGrid::voxelToWorld(int x, int y, int z)
 	cv::Point3d point;
 	point.x = startX + double(step * x);
 	point.y = startY + double(step * y);
-	point.z = startZ + double(step * z);
+	point.z = startZ - double(step * z);
 
 	return point;
 }
 
-cv::Point2i VoxelGrid::projectVoxel(int x, int y, int z, cv::Matx44d pose, double imgScale)
+cv::Point2i VoxelGrid::projectVoxel(int x, int y, int z, cv::Matx44d pose, double imgScale, double& zc)
 {
 	cv::Matx34d standardProjection(
 		1, 0, 0, 0,
@@ -171,6 +171,7 @@ cv::Point2i VoxelGrid::projectVoxel(int x, int y, int z, cv::Matx44d pose, doubl
 	cv::Matx41d voxelWorld4d(voxelWorld.x, voxelWorld.y, voxelWorld.z, 1.0);
 
 	cv::Matx31d Pixel3d = P * voxelWorld4d;
+	zc = Pixel3d(2, 0);
 
 	pointPixel.x = Pixel3d(0, 0) / Pixel3d(2, 0);
 	pointPixel.y = Pixel3d(1, 0) / Pixel3d(2, 0);
@@ -194,6 +195,7 @@ void VoxelGrid::carve(std::vector<ImageMeta> imageMetas, double imgScale, float 
 			{
 				int vote = 0;
 				std::vector<cv::Vec3b> voxelColorProposals;
+				std::vector<double> voxelColorProposalsWeights;
 
 				// Looping over images
 				for (int i = 0; i < numImages; ++i)
@@ -205,7 +207,8 @@ void VoxelGrid::carve(std::vector<ImageMeta> imageMetas, double imgScale, float 
 					cv::Mat image = imageMetas[i].foregroundImage;
 
 					// Project voxel onto image
-					cv::Point2i projectedV = projectVoxel(x, y, z, pose, imgScale);
+					double zc = 0.0;
+					cv::Point2i projectedV = projectVoxel(x, y, z, pose, imgScale, zc);
 
 					if (projectedV.x < image.cols && projectedV.y < image.rows && projectedV.x > -1 && projectedV.y > -1)
 					{
@@ -255,7 +258,11 @@ void VoxelGrid::carve(std::vector<ImageMeta> imageMetas, double imgScale, float 
 						// Don't vote to carve the voxel and propose the color to be set if projects to foreground pixel
 						else
 						{
+							// Color values of the pixel are proposed for voxel which get projected into that pixel.
 							voxelColorProposals.push_back(imagePixel);
+							
+							// Cameras that are closer to the voxel contribute more when deciding the color of the voxel.
+							voxelColorProposalsWeights.push_back(1.0 / (zc*zc*zc + 0.0001));
 						}
 					}
 				}
@@ -267,23 +274,27 @@ void VoxelGrid::carve(std::vector<ImageMeta> imageMetas, double imgScale, float 
 				// If not enough votes to carve the voxel
 				else
 				{
-					int sumR = 0;
-					int sumG = 0;
-					int sumB = 0;
+					double sumR = 0.0;
+					double sumG = 0.0;
+					double sumB = 0.0;
+					double sumW = 0.0;
 					int numProposals = voxelColorProposals.size();
 
 					// If there are out of scope regions of grid that are not covere by image dataset. (Consider using smaller grid or more images)
 					if (numProposals == 0) numProposals = 1;
-
+					
+					int index = 0;
 					for (cv::Vec3b colorProp : voxelColorProposals)
 					{
-						sumR += colorProp.val[2];
-						sumG += colorProp.val[1];
-						sumB += colorProp.val[0];
+						sumR += colorProp.val[2] * voxelColorProposalsWeights[index];
+						sumG += colorProp.val[1] * voxelColorProposalsWeights[index];
+						sumB += colorProp.val[0] * voxelColorProposalsWeights[index];
+						sumW += voxelColorProposalsWeights[index];
+						++index;
 					}
 
-					// Set voxel color to the average of proposed color values from different images
-					setElementColor(x, y, z, cv::Vec3b(sumR / numProposals, sumG / numProposals, sumB / numProposals));
+					// Set voxel color to the weighted average of proposed color values from different images
+					setElementColor(x, y, z, cv::Vec3b(sumR / sumW, sumG / sumW, sumB / sumW));
 				}
 			}
 		}
