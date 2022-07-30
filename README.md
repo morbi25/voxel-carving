@@ -2,9 +2,10 @@
 # Voxel Carving Using ArUco Markers
 
 This is the source code of the Project Team 5 at 3D Scanning & Motion Capture course in 2022 summer semester.
+In this project, we aim to reconstruct 3D objects from multiple images of the objects on top of ArUco board using voxel carving techniques.
 This repository presents our code and how to build it to make a demo using our resources.
 
-![Voxel Carving Using ArUco Markers - Stanford Bunny](bunny.png)
+![Voxel Carving Using ArUco Markers](title_img.jpg)
 
 ## Folder Structure
 
