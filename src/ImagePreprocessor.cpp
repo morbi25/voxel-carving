@@ -81,11 +81,11 @@ void ImagePreprocessor::verbose(std::vector<ImageMeta> imageMetas, std::string o
         std::string filename = imageMeta.filepath.filename().string();
         if (writeImage)
         {
-            cv::imwrite(outDir + filename.substr(0, filename.find_last_of(".")) + "_preprocessed", imageMeta.image);
+            cv::imwrite(outDir + filename.substr(0, filename.find_last_of(".")) + "_preprocessed.jpg", imageMeta.image);
         }
         if (writeForegroundImage)
         {
-            cv::imwrite(outDir + filename.substr(0, filename.find_last_of(".")) + "_foreground", imageMeta.foregroundImage);
+            cv::imwrite(outDir + filename.substr(0, filename.find_last_of(".")) + "_foreground.jpg", imageMeta.foregroundImage);
         }
         if (printCameraPoses)
         {
