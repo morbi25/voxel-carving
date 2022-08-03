@@ -37,7 +37,7 @@ public:
      * @param mask 8-bit single-channel mask (the mask is initialized by the function when mode is set to GC_INIT_WITH_RECT)
      * @param scale Scale factor for scaling the rectangle
      */
-    GrabCut(cv::Rect rect, unsigned int iterCount = 1, cv::GrabCutModes mode = cv::GC_INIT_WITH_RECT, cv::Mat mask = cv::Mat(), double scale = 0.125);
+    GrabCut(cv::Rect rect=cv::Rect(0, 0, 7990, 5990), unsigned int iterCount = 5, cv::GrabCutModes mode = cv::GC_INIT_WITH_RECT, cv::Mat mask = cv::Mat(), double scale = 0.125);
 
     /**
      * @brief Perform foreground segmentation using grabcut

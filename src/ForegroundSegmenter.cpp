@@ -2,6 +2,11 @@
 
 GrabCut::GrabCut(cv::Rect rect, unsigned int iterCount, cv::GrabCutModes mode, cv::Mat mask, double scale) : mRect(std::move(rect)), mIterCount(std::move(iterCount)), mMode(std::move(mode)), mMask(std::move(mask)), mScale(scale)
 {
+    // Scale rectangle that exclude background area according to image resizing
+    mRect.x *= mScale;
+    mRect.y *= mScale;
+    mRect.width *= mScale;
+    mRect.height *= mScale;
 }
 
 cv::Mat GrabCut::doForegroundSegmentation(const cv::Mat &image)
@@ -9,12 +14,6 @@ cv::Mat GrabCut::doForegroundSegmentation(const cv::Mat &image)
     // Temporary background and foreground model
     cv::Mat bgdModel;
     cv::Mat fgdModel;
-
-    // Scale rectangle that exclude background area according to image resizing
-    mRect.x *= mScale;
-    mRect.y *= mScale;
-    mRect.width *= mScale;
-    mRect.height *= mScale;
 
     // Extract forground mask
     cv::grabCut(image, mMask, mRect, bgdModel, fgdModel, mIterCount, mMode);
