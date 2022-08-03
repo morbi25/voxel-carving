@@ -65,7 +65,7 @@ public:
         double thresholdInterest = 40, double thresholdOther = 1.3, std::function<bool(double r, double g, double b, double thresholdInterest, double thresholdOther)> thresholdFct = [](double r, double g, double b, double thresholdInterest, double thresholdOther)
                                                                     {
     double BRTreshold = g * 1.3;
-    return g < 40 || r + b > BRTreshold; });
+    return g < thresholdInterest || r + b > thresholdOther; });
     
     /**
      * @brief Perform foreground segmentation using color thresholding
