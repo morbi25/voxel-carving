@@ -5,6 +5,7 @@
 #include "open3d/Open3D.h"
 
 //#define DO_GRID_VISUALIZATION
+#define USE_PARALLELIZATION
 
 class VoxelGrid
 {

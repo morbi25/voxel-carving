@@ -1,10 +1,10 @@
 #include <fstream>
 #include <iostream>
+#include <omp.h>
 
 #include "../inc/ImagePreprocessor.hpp"
 #include "../inc/VoxelGrid.hpp"
 #include "../inc/Eigen.h"
-#include <omp.h>
 
 VoxelGrid::VoxelGrid(int sizeX_, int sizeY_, int sizeZ_, double startX_, double startY_, double startZ_, double step_)
 {
@@ -185,10 +185,14 @@ void VoxelGrid::carve(std::vector<ImageMeta> imageMetas, double imgScale, float 
 	int numImages = imageMetas.size();
 
 // Looping over voxels
+#ifdef USE_PARALLELIZATION
 #pragma omp parallel for
+#endif
 	for (int x = 0; x < sizeX; ++x)
 	{
+#ifdef USE_PARALLELIZATION
 #pragma omp parallel for
+#endif
 		for (int y = 0; y < sizeY; ++y)
 		{
 			for (int z = 0; z < sizeZ; ++z)
