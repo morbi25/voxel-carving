@@ -6,27 +6,16 @@
 
 TEST(ImagePreprocessorTest, ReadSingleImageAndExtractForeground)
 {
-    std::string filename = "../resources/test0.png";
-    cv::Rect rect = cv::Rect(50, 50, 400, 500);
+    std::string filename = "../resources/green_bunny/20220713_204828.jpg";
 
     cv::Mat image = cv::imread(filename);
-    cv::Mat foregroundImage = GrabCut(rect).doForegroundSegmentation(image);
+    ColorThreshold colorThreshold;
+    cv::Mat foregroundImage = colorThreshold.doForegroundSegmentation(image);
 
-    cv::imwrite("../resources/test_foreground.png", foregroundImage);
+    cv::imwrite("../resources/green_bunny/20220713_204828_foreground.jpg", foregroundImage);
 }
 
-TEST(ImagePreprocessorTest, ReadTeapotImageAndExtractForeground)
-{
-    std::string filename = "../resources/green_teapot_white_background/20220706_214554.jpg";
-    cv::Rect rect = cv::Rect(3616, 1044, 1252, 1744); // Values of rect are manually determined with GIMP
-
-    cv::Mat image = cv::imread(filename);
-    cv::Mat foregroundImage = GrabCut(rect).doForegroundSegmentation(image);
-
-    cv::imwrite("../resources/green_teapot_white_background/20220706_214554_foreground.jpg", foregroundImage);
-}
-
-void detectAndDrawMarkerForDataset(std::string inDir, std::string outDir)
+/*void detectAndDrawMarkerForDataset(std::string inDir, std::string outDir)
 {
     ImageMeta imageMeta;
     cv::Matx33d cameraMatrix(6005.641173008885, 0, 4030.950098307286, 0, 6002.681113514058, 2986.968236297804, 0, 0, 1);
@@ -50,18 +39,35 @@ void detectAndDrawMarkerForDataset(std::string inDir, std::string outDir)
         worldToCamera = poseEstimator.computeCameraPoseMatrixFromBoardPose(rVec, tVec);
         std::cout << worldToCamera << std::endl;
     }
-}
+}*/
 
 TEST(ImagePreprocessorTest, DetectTestBoard)
 {
-    detectAndDrawMarkerForDataset("../resources/green_teapot_brown_background/", "../resources/green_teapot_brown_background_preprocessed/");
+    ImageMeta imageMeta;
+    cv::Matx33d cameraMatrix(6005.641173008885, 0, 4030.950098307286, 0, 6002.681113514058, 2986.968236297804, 0, 0, 1);
+    cv::Vec<double, 5> distCoeffs(0.08170529228771495, -0.2834249429739051, 0.0007430954776429432, 0.0006295724080059367, 0.3968821057473708);
+    std::vector<int> ids;
+    std::vector<std::vector<cv::Point2f>> corners;
+    cv::Mat rVec;
+    cv::Mat tVec;
+    cv::Matx44d worldToCamera;
+    PoseEstimator poseEstimator(cameraMatrix, distCoeffs);
+        
+    imageMeta.filepath = "../resources/green_bunny/20220713_204828.jpg";
+    imageMeta.image = cv::imread(imageMeta.filepath.string());
+    poseEstimator.detectMarkersAndEstimateBoardPose(ids, corners, rVec, tVec, imageMeta);
+    cv::Mat imageWithDetectedMarkers = poseEstimator.drawArUcoMarkersAndAxisOnImage(imageMeta.image, ids, corners, rVec, tVec);
+    cv::imwrite("../resources/green_bunny/20220713_204828_markers.jpg", imageWithDetectedMarkers);
+
+    worldToCamera = poseEstimator.computeCameraPoseMatrixFromBoardPose(rVec, tVec);
+    std::cout << worldToCamera << std::endl;
 }
 
 TEST(ImagePreprocessorTest, ReadMultipleImagesAndComputeCameraPose)
 {
     std::vector<cv::Matx44d> cameraPoses;
-    std::string inDir = "../resources/green_teapot_brown_background_subset/";
-    std::string outDir = "../resources/green_teapot_brown_background_preprocessed/";
+    std::string inDir = "../resources/green_bunny/";
+    std::string outDir = "../resources/green_bunny/";
     cv::Matx33d cameraMatrix(6005.641173008885, 0, 4030.950098307286, 0, 6002.681113514058, 2986.968236297804, 0, 0, 1);
     cv::Vec<double, 5> distCoeffs(0.08170529228771495, -0.2834249429739051, 0.0007430954776429432, 0.0006295724080059367, 0.3968821057473708);
     PoseEstimator poseEstimator(cameraMatrix, distCoeffs);
@@ -69,5 +75,5 @@ TEST(ImagePreprocessorTest, ReadMultipleImagesAndComputeCameraPose)
     ImagePreprocessor imPrep(poseEstimator, foregroundSegmenter);
 
     std::vector<ImageMeta> imageMetas = imPrep.readImagesAndComputeCameraPoses(inDir, true);
-    imPrep.verbose(imageMetas, outDir, true, true, true);
+    imPrep.verbose(imageMetas, outDir, false, false, true);
 }
