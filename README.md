@@ -33,6 +33,13 @@ $ make
 $ ./voxel-carving
 ```
 
+## How to Run the Test
+Assuming that you are still in the `Build` folder, you can run the test by running the following command:
+
+```
+$ ./test_voxel_carving
+```
+
 ## Authors
 
 - Nils Morbitzer
