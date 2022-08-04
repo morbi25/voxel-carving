@@ -7,122 +7,36 @@
 
 #include "../inc/ImagePreprocessor.hpp"
 
-ImagePreprocessor::ImagePreprocessor(PoseEstimator poseEstimator) : mPoseEstimator(poseEstimator)
+ImagePreprocessor::ImagePreprocessor(PoseEstimator &poseEstimator, ForegroundSegmenter &foregroundSegmenter, bool doForegroundSegmentation, double scale) : mPoseEstimator(poseEstimator), mForegroundSegmenter(foregroundSegmenter), mDoForegroundSegmentation(std::move(doForegroundSegmentation)), mScale(std::move(scale))
 {
 }
 
-ImagePreprocessor::ImagePreprocessor(cv::Matx33d cameraMatrix, cv::Vec<double, 5> distCoeffs, cv::aruco::PREDEFINED_DICTIONARY_NAME dictType)
-    : mPoseEstimator(cameraMatrix, distCoeffs)
+std::vector<ImageMeta> ImagePreprocessor::readImagesAndComputeCameraPoses(const std::string &inDir, bool drawMarkersAndAxisOnImage)
 {
-}
+    // Return data
+    std::vector<ImageMeta> imageMetas;
+    ImageMeta imageMeta;
 
-void ImagePreprocessor::doForegroundSegmentation(cv::Mat &foregroundImage, cv::Mat &mask, const cv::Mat &image, const cv::Rect &rect, const unsigned int iterCount, const cv::GrabCutModes &mode, const bool &objectIsBlack)
-{
-    // Temporary background and foreground model
-    cv::Mat bgdModel;
-    cv::Mat fgdModel;
-
-    // Use mask if specified
-    if (mode == cv::GrabCutModes::GC_INIT_WITH_MASK)
-    {
-        mask = mask;
-    }
-
-    // Extract forground mask
-    cv::grabCut(image, mask, rect, bgdModel, fgdModel, iterCount, mode);
-
-    // Convert possible background pixels also to background value
-    for (int j = 0; j < image.rows; j++)
-    {
-        for (int k = 0; k < image.cols; k++)
-        {
-            if (mask.at<uchar>(j, k) == cv::GrabCutClasses::GC_BGD || mask.at<uchar>(j, k) == cv::GrabCutClasses::GC_PR_BGD)
-            {
-                mask.at<uchar>(j, k) = cv::GrabCutClasses::GC_BGD;
-            }
-            cv::Vec3b pixel = image.at<cv::Vec3b>(j, k);
-            if (mask.at<uchar>(j, k) == cv::GrabCutClasses::GC_FGD || mask.at<uchar>(j, k) == cv::GrabCutClasses::GC_PR_FGD)
-            {
-                double BRTreshold = pixel.val[1] * 1.3;
-                if (pixel.val[1] < 40 || (double)pixel.val[0] + (double)pixel.val[2] > BRTreshold)
-                {
-                    mask.at<uchar>(j, k) = cv::GrabCutClasses::GC_BGD;
-                }
-            }
-        }
-    }
-
-    // Copy only foreground to foreground image and mask out background region
-    // If the object of interest is black, we set the background color to white, otherwise to black
-    if (objectIsBlack)
-    {
-        cv::Mat maskTemp(mask.size(), mask.type());
-        maskTemp.setTo(cv::Scalar(255), mask);
-        cv::Mat invMask(mask.size(), mask.type());
-        cv::bitwise_not(maskTemp, invMask);
-        image.copyTo(foregroundImage, mask);
-        foregroundImage.setTo(cv::Scalar(255, 255, 255), invMask);
-    }
-    else
-    {
-        image.copyTo(foregroundImage, mask);
-    }
-}
-
-void ImagePreprocessor::readImagesAndComputeCameraPoses(std::vector<std::filesystem::path> &filepaths, std::vector<cv::Mat> &images, std::vector<cv::Matx44d> &cameraPoses, const std::string &inDir, const bool &drawMarkersAndAxisOnImage
-#ifdef DO_FOREGROUND_SEGMENTATION
-                                                        ,
-                                                        std::unordered_map<std::string, cv::Rect> &imageNamesToRect, const unsigned int &iterCount, const cv::GrabCutModes &mode, const std::vector<cv::Mat> &masks
-#endif
-)
-{
     // Temporary data
-    cv::Mat image;
     std::vector<int> ids;
     std::vector<std::vector<cv::Point2f>> corners;
     cv::Mat rVec;
     cv::Mat tVec;
-    cv::Mat cameraPose;
 
+    // Iterator to iterate over dataset directory
     auto dirIterator = std::filesystem::recursive_directory_iterator(inDir);
-    unsigned int i = 0;
-
-#ifdef DO_FOREGROUND_SEGMENTATION
-    cv::Mat foregroundImage;
-    cv::Mat mask;
-    for (auto &rect : imageNamesToRect)
-    {
-        rect.second.x *= 0.125;
-        rect.second.y *= 0.125;
-        rect.second.width *= 0.125;
-        rect.second.height *= 0.125;
-    }
-#endif
-    // Initialize auto vector
-    std::vector<std::filesystem::directory_entry> dirEntries;
-    for (auto &entry : dirIterator)
-    {
-        dirEntries.push_back(entry);
-    }
 
     // Iterate over all images in the sequence
-    for (i = 0; i < dirEntries.size(); i++)
+    for (auto &entry : dirIterator)
     {
-#ifdef DO_FOREGROUND_SEGMENTATION
-        // Check if masks and rects are valid
-        if (i >= imageNamesToRect.size() || mode == cv::GC_INIT_WITH_MASK && i >= masks.size())
-        {
-            break;
-        }
-#endif
         // Get filesystem path
-        auto filepath = dirEntries[i].path();
+        imageMeta.filepath = entry.path();
 
         // Read image
-        image = cv::imread(filepath.string());
+        imageMeta.image = cv::imread(imageMeta.filepath.string());
 
         // Estimate marker poses
-        if (!mPoseEstimator.estimateMarkerPoses(ids, corners, rVec, tVec, image))
+        if (!mPoseEstimator.detectMarkersAndEstimateBoardPose(ids, corners, rVec, tVec, imageMeta))
         {
             continue;
         }
@@ -130,40 +44,52 @@ void ImagePreprocessor::readImagesAndComputeCameraPoses(std::vector<std::filesys
         // Draw ArUco markers and axis on image
         if (drawMarkersAndAxisOnImage)
         {
-            image = mPoseEstimator.drawArUcoMarkersAndAxisOnImage(image, ids, corners, rVec, tVec);
+            imageMeta.image = mPoseEstimator.drawArUcoMarkersAndAxisOnImage(imageMeta.image, ids, corners, rVec, tVec);
         }
 
         // Compute camera pose matrix with respect to board
-        cv::Matx44d worldToCamera = mPoseEstimator.computeCameraPoseMatrixFromBoardPose(rVec, tVec);
+        imageMeta.cameraPose = mPoseEstimator.computeCameraPoseMatrixFromBoardPose(rVec, tVec);
 
-#ifdef RESIZE_IMAGES
         // Resize images to have a resolution that can be handled
-        cv::resize(image, image, cv::Size(), 0.125, 0.125);
-#endif
-#ifdef DO_FOREGROUND_SEGMENTATION
-        // Compute foreground mask and foreground image
-        ImagePreprocessor::doForegroundSegmentation(foregroundImage, mask, image, imageNamesToRect[filepath.filename().string()], iterCount, mode);
-#endif
+        if (mScale != 1.0)
+        {
+            cv::resize(imageMeta.image, imageMeta.image, cv::Size(), mScale, mScale);
+        }
+
+        // Peform foreground segmentation on input image
+        cv::Mat foregroundImageBGR = mForegroundSegmenter.doForegroundSegmentation(imageMeta.image);
+        imageMeta.foregroundImage = foregroundImageBGR;
 
         // Store all relevant data
-        filepaths.push_back(filepath);
-#ifdef DO_FOREGROUND_SEGMENTATION
-        images.push_back(foregroundImage);
-#else
-        images.push_back(image);
-#endif
-        cameraPoses.push_back(worldToCamera);
+        imageMetas.push_back(imageMeta);
 
         // Clear all temporary data structures and increment i
-        // image.release();
-#ifdef DO_FOREGROUND_SEGMENTATION
-        foregroundImage.release();
-        mask.release();
-#endif
+        foregroundImageBGR.release();
         ids.clear();
         corners.clear();
         rVec.release();
         tVec.release();
-        i++;
+    }
+
+    return imageMetas;
+}
+
+void ImagePreprocessor::verbose(std::vector<ImageMeta> imageMetas, std::string outDir, bool writeImage, bool writeForegroundImage, bool printCameraPoses)
+{
+    for (auto &imageMeta : imageMetas)
+    {
+        std::string filename = imageMeta.filepath.filename().string();
+        if (writeImage)
+        {
+            cv::imwrite(outDir + filename.substr(0, filename.find_last_of(".")) + "_preprocessed.jpg", imageMeta.image);
+        }
+        if (writeForegroundImage)
+        {
+            cv::imwrite(outDir + filename.substr(0, filename.find_last_of(".")) + "_foreground.jpg", imageMeta.foregroundImage);
+        }
+        if (printCameraPoses)
+        {
+            std::cout << imageMeta.cameraPose << std::endl;
+        }
     }
 }
