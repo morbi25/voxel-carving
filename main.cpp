@@ -5,8 +5,8 @@
 
 int main(int argc, char **argv)
 {
-    // Define a voxel grid of size 400x400x150 with step size 0.0007
-    VoxelGrid voxelGrid(400, 400, 150, 0, 0, 0, 0.0007);
+    // Define a voxel grid of size 400x400x200 with step size 0.0007
+    VoxelGrid voxelGrid(400, 400, 200, 0, 0, 0, 0.0007);
 
     // Input directory for the voxel carving algorithm
     std::string inDir = "../resources/green_bunny/";
