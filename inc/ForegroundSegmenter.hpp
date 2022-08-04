@@ -29,7 +29,7 @@ class GrabCut : public ForegroundSegmenter
 
 public:
     /**
-     * @brief Construct a new Grab Cut object @p rect, @p iterCount, @p mode, @p mask, and @p scale
+     * @brief Construct a new GrabCut object accepting @p rect, @p iterCount, @p mode, @p mask, and @p scale
      *
      * @param rect ROI containing a segmented object, the pixels outside of the ROI are marked as "obvious background"
      * @param iterCount Number of iterations the algorithm should make before returning the result (the result can be refined with further calls with mode==GC_INIT_WITH_MASK or mode==GC_EVAL)
@@ -57,9 +57,11 @@ class ColorThreshold : public ForegroundSegmenter
 
 public:
     /**
-     * @brief Construct a new Color Threshold object
-     *
-     * @param thresholdFct
+     * @brief Construct a new ColorThreshold object accepting @p thresholdInterest, @p thresholdOther, and @p thresholdFct
+     * 
+     * @param thresholdInterest The threshold that should be used for the color of interest
+     * @param thresholdOther The threshold that should be used to limit other color values
+     * @param thresholdFct The lambda function used for color threshold checking
      */
     ColorThreshold(
         double thresholdInterest = 40, double thresholdOther = 1.3, std::function<bool(double r, double g, double b, double thresholdInterest, double thresholdOther)> thresholdFct = [](double r, double g, double b, double thresholdInterest, double thresholdOther)
