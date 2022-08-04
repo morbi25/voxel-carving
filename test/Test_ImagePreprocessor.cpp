@@ -12,7 +12,7 @@ TEST(ImagePreprocessorTest, ReadSingleImageAndExtractForeground)
     ColorThreshold colorThreshold;
     cv::Mat foregroundImage = colorThreshold.doForegroundSegmentation(image);
 
-    cv::imwrite("../resources/green_bunny/20220713_204828_foreground.jpg", foregroundImage);
+    cv::imwrite("../resources/20220713_204828_foreground.jpg", foregroundImage);
 }
 
 /*void detectAndDrawMarkerForDataset(std::string inDir, std::string outDir)
@@ -57,7 +57,7 @@ TEST(ImagePreprocessorTest, DetectTestBoard)
     imageMeta.image = cv::imread(imageMeta.filepath.string());
     poseEstimator.detectMarkersAndEstimateBoardPose(ids, corners, rVec, tVec, imageMeta);
     cv::Mat imageWithDetectedMarkers = poseEstimator.drawArUcoMarkersAndAxisOnImage(imageMeta.image, ids, corners, rVec, tVec);
-    cv::imwrite("../resources/green_bunny/20220713_204828_markers.jpg", imageWithDetectedMarkers);
+    cv::imwrite("../resources/20220713_204828_markers.jpg", imageWithDetectedMarkers);
 
     worldToCamera = poseEstimator.computeCameraPoseMatrixFromBoardPose(rVec, tVec);
     std::cout << worldToCamera << std::endl;
@@ -67,7 +67,7 @@ TEST(ImagePreprocessorTest, ReadMultipleImagesAndComputeCameraPose)
 {
     std::vector<cv::Matx44d> cameraPoses;
     std::string inDir = "../resources/green_bunny/";
-    std::string outDir = "../resources/green_bunny/";
+    std::string outDir = "../resources/";
     cv::Matx33d cameraMatrix(6005.641173008885, 0, 4030.950098307286, 0, 6002.681113514058, 2986.968236297804, 0, 0, 1);
     cv::Vec<double, 5> distCoeffs(0.08170529228771495, -0.2834249429739051, 0.0007430954776429432, 0.0006295724080059367, 0.3968821057473708);
     PoseEstimator poseEstimator(cameraMatrix, distCoeffs);
