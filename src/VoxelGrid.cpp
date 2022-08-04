@@ -131,9 +131,9 @@ void VoxelGrid::render()
 {
 	VoxelGrid::toPLY();
 	// create new VoxelGrid object
-	//auto vg = std::make_shared<open3d::geometry::VoxelGrid>();
-	//open3d::io::ReadVoxelGrid("voxel_grid.ply", *vg);
-	//open3d::visualization::DrawGeometries({vg});
+	auto vg = std::make_shared<open3d::geometry::VoxelGrid>();
+	open3d::io::ReadVoxelGrid("voxel_grid.ply", *vg);
+	open3d::visualization::DrawGeometries({vg});
 }
 
 cv::Point3d VoxelGrid::voxelToWorld(int x, int y, int z)
