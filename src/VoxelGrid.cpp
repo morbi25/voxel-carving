@@ -141,7 +141,8 @@ cv::Point3d VoxelGrid::voxelToWorld(int x, int y, int z)
 	cv::Point3d point;
 	point.x = startX + double(step * x);
 	point.y = startY + double(step * y);
-	point.z = startZ - double(step * z);
+	// Please change to - instead of + if you compile on Windows
+	point.z = startZ + double(step * z);
 
 	return point;
 }
