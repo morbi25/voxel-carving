@@ -50,9 +50,9 @@ cv::Mat ColorThreshold::doForegroundSegmentation(const cv::Mat &image)
     {
         for (int k = 0; k < image.cols; k++)
         {
-            // Perform color thresholding
+            // Perform color thresholding (BGR)
             cv::Vec3b pixel = image.at<cv::Vec3b>(j, k);
-            if (mThresholdFct(pixel.val[0], pixel.val[1], pixel.val[2], mThresholdInterest, mThresholdOther))
+            if (mThresholdFct(pixel.val[2], pixel.val[1], pixel.val[0], mThresholdInterest, mThresholdOther))
             {
                 foregroundImage.at<cv::Vec3b>(j, k) = cv::Vec3b(0, 0, 0);
             }
