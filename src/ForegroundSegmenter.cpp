@@ -36,6 +36,11 @@ cv::Mat GrabCut::doForegroundSegmentation(const cv::Mat &image)
     return foregroundImage;
 }
 
+ColorThreshold::ColorThreshold(double thresholdInterest, double thresholdOther, std::function<bool(double r, double g, double b, double thresholdInterest, double thresholdOther)> thresholdFct)
+: mThresholdInterest(thresholdInterest), mThresholdOther(thresholdOther), mThresholdFct(thresholdFct)
+{
+}
+
 cv::Mat ColorThreshold::doForegroundSegmentation(const cv::Mat &image)
 {
     cv::Mat foregroundImage = image;
@@ -45,10 +50,9 @@ cv::Mat ColorThreshold::doForegroundSegmentation(const cv::Mat &image)
     {
         for (int k = 0; k < image.cols; k++)
         {
-            // Perform color thresholding
+            // Perform color thresholding (BGR)
             cv::Vec3b pixel = image.at<cv::Vec3b>(j, k);
-            double BRTreshold = pixel.val[1] * 1.3;
-            if (pixel.val[1] < 40 || (double)pixel.val[0] + (double)pixel.val[2] > BRTreshold)
+            if (mThresholdFct(pixel.val[2], pixel.val[1], pixel.val[0], mThresholdInterest, mThresholdOther))
             {
                 foregroundImage.at<cv::Vec3b>(j, k) = cv::Vec3b(0, 0, 0);
             }
