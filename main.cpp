@@ -9,7 +9,7 @@ int main(int argc, char **argv)
     VoxelGrid voxelGrid(400, 400, 150, 0, 0, 0, 0.0007);
 
     // Input directory for the voxel carving algorithm
-    std::string inDir = "../resources/green_bunny_v2/";
+    std::string inDir = "../resources/green_bunny/";
 
     // Define camera intrinsics and distortion coefficients estimated by the doCalibration procedure
     cv::Matx33d cameraMatrix(6005.641173008885, 0, 4030.950098307286, 0, 6002.681113514058, 2986.968236297804, 0, 0, 1);
