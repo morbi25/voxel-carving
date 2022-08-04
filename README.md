@@ -17,7 +17,7 @@ This repository presents our code and how to build it to make a demo using our r
 
 - In `3d_printing`, we have our 3D printing objects, render images from Meshlab and images of the actual objects (later we have changed some objects printed in green to achieve a good result for color thresholding).
 
-- You have to download `resources` folder from [HERE](https://1drv.ms/u/s!AgHAFcbMEq4ZhRDs0Cm9vji90jao?e=KQhO5u). Which contains our actual images to carve the voxel grid.
+- You have to download `resources` folder from [HERE](https://1drv.ms/u/s!AgHAFcbMEq4ZhRJ8g-LL9EviCca8?e=zohIgJ). Which contains our actual images to carve the voxel grid.
 
 - At last, you have to create a folder named `Build` to compile the application.
 
